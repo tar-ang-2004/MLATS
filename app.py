@@ -596,6 +596,7 @@ def ai_models():
     return render_template('ai.html')
 
 @app.route('/analyze', methods=['POST'])
+@csrf.exempt
 def analyze_resume():
     """Analyze uploaded resume"""
     # Generate session ID for processing tracking
