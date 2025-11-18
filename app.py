@@ -220,77 +220,131 @@ class EnhancedResumeExtractor:
         text_lower = text.lower()
         found_skills = set()
         
-        # Check for skills in dedicated skills section
-        skills_section = self._extract_section(text, ['skills', 'technical skills', 'core competencies'])
-        if skills_section:
-            for skill in self.all_skills:
-                if skill.lower() in skills_section.lower():
-                    found_skills.add(skill)
+        # Check for skills in dedicated skills section first
+        skills_section = self._extract_section(text, ['skills', 'technical skills', 'core competencies', 'technologies'])
         
-        # Check entire document for skills
+        # Extract structured skills from skills section (like in your resume format)
+        if skills_section:
+            self._extract_structured_skills(skills_section, found_skills)
+        
+        # Check entire document for technical skills
         for skill in self.all_skills:
-            if re.search(r'\b' + re.escape(skill.lower()) + r'\b', text_lower):
-                found_skills.add(skill)
+            # Use word boundaries to avoid partial matches
+            if re.search(r'\b' + re.escape(skill.lower()) + r'(?:js|\.js)?\b', text_lower):
+                found_skills.add(skill.title())
         
-        # Extract custom skills from skills section
-        if skills_section:
-            # Look for comma-separated or bullet-pointed skills
-            skill_candidates = re.split(r'[,\n•\-\*]', skills_section)
-            for candidate in skill_candidates:
-                candidate = candidate.strip()
-                if 2 <= len(candidate) <= 30 and not any(char.isdigit() for char in candidate):
-                    # Check if it's a reasonable skill name
-                    if any(keyword in candidate.lower() for keyword in ['development', 'programming', 'analysis', 'management']):
-                        found_skills.add(candidate.title())
+        # Extract additional skills from context
+        self._extract_contextual_skills(text, found_skills)
         
-        return list(found_skills)[:50]  # Limit to prevent overwhelming
+        return list(found_skills)[:50]  # Limit to reasonable number
+    
+    def _extract_structured_skills(self, skills_section: str, found_skills: set):
+        """Extract skills from structured format like in resumes"""
+        lines = [line.strip() for line in skills_section.split('\n') if line.strip()]
+        
+        for line in lines:
+            # Handle bullet point format: "• Programming Skills: Python, SQL, Bash, Git..."
+            if ':' in line:
+                parts = line.split(':', 1)
+                if len(parts) == 2:
+                    skills_text = parts[1]
+                    # Extract comma-separated skills
+                    skill_candidates = [s.strip() for s in re.split(r'[,;&]', skills_text) if s.strip()]
+                    for skill in skill_candidates:
+                        # Clean up skill name
+                        skill = re.sub(r'^[•\-\*\s]+', '', skill).strip()
+                        skill = re.sub(r'[,.]$', '', skill).strip()
+                        if len(skill) > 1 and len(skill) < 30:  # Reasonable length
+                            found_skills.add(skill.title())
+            else:
+                # Handle direct listing format
+                skill_candidates = [s.strip() for s in re.split(r'[,;&•\-\*]', line) if s.strip()]
+                for skill in skill_candidates:
+                    skill = skill.strip()
+                    if len(skill) > 1 and len(skill) < 30 and not skill.lower().startswith(('programming', 'tools', 'ml techniques', 'libraries')):
+                        found_skills.add(skill.title())
+    
+    def _extract_contextual_skills(self, text: str, found_skills: set):
+        """Extract skills from context and project descriptions"""
+        # Common technical terms that might appear in projects/experience
+        contextual_skills = [
+            'api', 'rest', 'restful', 'microservices', 'backend', 'frontend',
+            'database', 'sql', 'nosql', 'crud', 'mvc', 'oop', 'agile', 'scrum',
+            'ci/cd', 'devops', 'cloud', 'deployment', 'testing', 'debugging',
+            'optimization', 'performance', 'scalability', 'security'
+        ]
+        
+        text_lower = text.lower()
+        for skill in contextual_skills:
+            if re.search(r'\b' + re.escape(skill) + r'\b', text_lower):
+                found_skills.add(skill.upper() if skill in ['api', 'rest', 'sql', 'crud', 'mvc', 'oop'] else skill.title())
     
     def extract_experience(self, text: str) -> List[Dict[str, Any]]:
-        """Extract work experience with enhanced structure parsing"""
+        """Extract work experience with comprehensive parsing including achievements"""
         experience_section = self._extract_section(text, ['experience', 'work experience', 'employment', 'professional experience'])
         
         if not experience_section:
             return []
         
         experiences = []
-        
-        # Enhanced parsing for different resume formats
         lines = [line.strip() for line in experience_section.split('\n') if line.strip()]
-        current_exp = {}
+        current_exp = None
+        current_achievements = []
         
         for i, line in enumerate(lines):
-            # Skip bullet points and achievements for now
-            if re.match(r'^\s*[•\-\*·]', line):
+            # Skip empty lines
+            if not line:
                 continue
-                
-            # Check for company-title patterns
+            
+            # Check for company/title header (like "Labmentix Pvt. Ltd. — Artificial Intelligence & Data Science Intern")
             if self._is_experience_header(line):
                 # Save previous experience
                 if current_exp:
+                    if current_achievements:
+                        current_exp['achievements'] = current_achievements
                     experiences.append(current_exp)
                 
                 # Parse new experience header
                 current_exp = self._parse_experience_header(line)
+                current_achievements = []
                 
-                # Look ahead for dates and location
-                if i + 1 < len(lines):
-                    next_line = lines[i + 1]
+                # Look ahead for dates and location in next lines
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    next_line = lines[j]
+                    
+                    # Skip bullet points when looking for dates/location
+                    if next_line.startswith(('•', '-', '*', '·')):
+                        break
+                    
                     if self._contains_date_or_location(next_line):
                         dates, location = self._parse_date_location(next_line)
                         if dates:
                             current_exp['dates'] = dates
                         if location:
                             current_exp['location'] = location
+                        break
+            
+            # Check for job title line (italic text pattern)
+            elif current_exp and not current_exp.get('title') and self._is_job_title_line(line):
+                current_exp['title'] = line
+            
+            # Check for achievements/bullet points
+            elif line.startswith(('•', '-', '*', '·')) or (current_exp and self._is_achievement_line(line)):
+                achievement = line.lstrip('•-*· ').strip()
+                if len(achievement) > 15:  # Meaningful achievement
+                    current_achievements.append(achievement)
         
         # Don't forget the last experience
         if current_exp:
+            if current_achievements:
+                current_exp['achievements'] = current_achievements
             experiences.append(current_exp)
         
-        return experiences[:10]  # Limit to reasonable number
+        return experiences[:10]
     
     def extract_education(self, text: str) -> List[Dict[str, Any]]:
-        """Extract education with enhanced degree parsing"""
-        education_section = self._extract_section(text, ['education', 'academic', 'qualification'])
+        """Extract education with enhanced parsing for various formats"""
+        education_section = self._extract_section(text, ['education', 'academic', 'qualification', 'educational background'])
         
         if not education_section:
             return []
@@ -298,39 +352,84 @@ class EnhancedResumeExtractor:
         educations = []
         lines = [line.strip() for line in education_section.split('\n') if line.strip()]
         
-        current_edu = {}
+        current_edu = None
         
         for i, line in enumerate(lines):
-            # Check for institution names
-            if any(indicator in line.lower() for indicator in self.institution_indicators):
+            # Check for institution names or degree patterns
+            if (any(indicator in line.lower() for indicator in self.institution_indicators) or 
+                self._is_degree_line(line)):
+                
                 # Save previous education
                 if current_edu:
+                    # Set default degree if not found
+                    if 'degree' not in current_edu:
+                        current_edu['degree'] = 'Degree not specified'
                     educations.append(current_edu)
                 
-                current_edu = {'institution': line}
+                # Determine if this line is institution or degree
+                if any(indicator in line.lower() for indicator in self.institution_indicators):
+                    # This is an institution
+                    institution_line = line
+                    # Extract CGPA/Grade if present in the same line
+                    cgpa_match = re.search(r'[–—-]\s*(\d+\.\d+)\s*(?:cgpa|gpa)', line.lower())
+                    if cgpa_match:
+                        institution_line = re.sub(r'[–—-]\s*\d+\.\d+\s*(?:cgpa|gpa).*$', '', line, flags=re.IGNORECASE).strip()
+                        cgpa = cgpa_match.group(1)
+                    else:
+                        cgpa = None
+                        
+                    current_edu = {'institution': institution_line}
+                    if cgpa:
+                        current_edu['cgpa'] = cgpa
+                else:
+                    # This is a degree line
+                    current_edu = {'degree': line, 'institution': 'Institution not specified'}
                 
-                # Look for degree information in surrounding lines
-                for j in range(max(0, i-2), min(len(lines), i+3)):
-                    if j != i:
-                        degree = self._extract_degree_info(lines[j])
-                        if degree:
-                            current_edu['degree'] = degree
-                            break
-                
-                # Look for dates
-                for j in range(i, min(len(lines), i+3)):
-                    if self._contains_date(lines[j]):
-                        current_edu['dates'] = self._extract_dates(lines[j])
-                        break
+                # Look for additional info in surrounding lines
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    next_line = lines[j]
+                    
+                    # Look for dates
+                    if self._contains_date(next_line):
+                        current_edu['dates'] = self._extract_dates(next_line)
+                    
+                    # Look for degree if we have institution
+                    elif 'degree' not in current_edu and self._is_degree_line(next_line):
+                        current_edu['degree'] = next_line
+                    
+                    # Look for CGPA/Grade
+                    elif 'cgpa' not in current_edu:
+                        cgpa_match = re.search(r'(?:cgpa|gpa)\s*:?\s*(\d+\.\d+)', next_line.lower())
+                        grade_match = re.search(r'grade\s*:?\s*(\d+%)', next_line.lower())
+                        if cgpa_match:
+                            current_edu['cgpa'] = cgpa_match.group(1)
+                        elif grade_match:
+                            current_edu['grade'] = grade_match.group(1)
         
+        # Don't forget the last education
         if current_edu:
+            if 'degree' not in current_edu:
+                current_edu['degree'] = 'Degree not specified'
             educations.append(current_edu)
         
         return educations[:5]
     
     def extract_projects(self, text: str) -> List[Dict[str, Any]]:
-        """Extract projects with enhanced parsing"""
-        projects_section = self._extract_section(text, ['projects', 'personal projects', 'key projects'])
+        """Extract projects with comprehensive parsing for structured formats"""
+        # Try multiple section name patterns
+        projects_section = self._extract_section(text, ['projects', 'personal projects', 'key projects', 'project'])
+        
+        if not projects_section:
+            # Fallback: look for project patterns in the entire text
+            project_patterns = [
+                r'(Advanced News Analysis System|Vaccination Data Analysis|Task Management Application|Academic Management System|Sentiment Analysis Model).*?(?=\n(?:[A-Z][A-Za-z\s]+(?:\([^)]+\))?\s*(?:\n|$))|(?:\n\s*(?:EDUCATION|SKILLS|EXPERIENCE|CERTIFICATIONS)))',
+            ]
+            
+            for pattern in project_patterns:
+                matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+                if matches:
+                    projects_section = '\n'.join(matches)
+                    break
         
         if not projects_section:
             return []
@@ -338,17 +437,56 @@ class EnhancedResumeExtractor:
         projects = []
         lines = [line.strip() for line in projects_section.split('\n') if line.strip()]
         
-        for line in lines:
-            if self._is_project_header(line):
-                project = {'name': line}
+        current_project = None
+        current_achievements = []
+        
+        for i, line in enumerate(lines):
+            # Skip empty lines
+            if not line:
+                continue
                 
-                # Extract technologies if in parentheses
-                tech_match = re.search(r'\(([^)]+)\)', line)
+            # Check if this is a project title (not a bullet point)
+            if not line.startswith(('•', '-', '*', '·')) and self._is_project_title(line):
+                # Save previous project if exists
+                if current_project:
+                    if current_achievements:
+                        current_project['achievements'] = current_achievements
+                    projects.append(current_project)
+                
+                # Start new project
+                project_name = line
+                technologies = ''
+                
+                # Extract technologies in parentheses
+                tech_match = re.search(r'\(([^)]+)\)\s*$', line)
                 if tech_match:
-                    project['technologies'] = tech_match.group(1)
-                    project['name'] = re.sub(r'\s*\([^)]+\)', '', line).strip()
+                    technologies = tech_match.group(1)
+                    project_name = re.sub(r'\s*\([^)]+\)\s*$', '', line).strip()
                 
-                projects.append(project)
+                current_project = {
+                    'name': project_name,
+                    'technologies': technologies,
+                    'achievements': []
+                }
+                current_achievements = []
+                
+                # Look for GitHub link in next few lines
+                for j in range(i + 1, min(i + 3, len(lines))):
+                    if 'github' in lines[j].lower():
+                        current_project['github'] = lines[j].strip()
+                        break
+            
+            # Check if this is an achievement/bullet point
+            elif line.startswith(('•', '-', '*', '·')) or (current_project and self._is_achievement_line(line)):
+                achievement = line.lstrip('•-*· ').strip()
+                if len(achievement) > 10:  # Meaningful achievement
+                    current_achievements.append(achievement)
+        
+        # Don't forget the last project
+        if current_project:
+            if current_achievements:
+                current_project['achievements'] = current_achievements
+            projects.append(current_project)
         
         return projects[:10]
     
@@ -395,10 +533,23 @@ class EnhancedResumeExtractor:
     
     # Helper methods
     def _extract_section(self, text: str, section_names: List[str]) -> Optional[str]:
-        """Extract a specific section from resume"""
-        pattern = r'(?i)\n(' + '|'.join(section_names) + r')\s*\n(.*?)(?=\n(?:[A-Z\s]{2,})\s*\n|$)'
-        match = re.search(pattern, text, re.DOTALL)
-        return match.group(2).strip() if match else None
+        """Extract a specific section from resume with improved pattern matching"""
+        # Try multiple patterns to handle different formatting styles
+        patterns = [
+            # Pattern 1: Section header followed by content (most common)
+            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*\n(.*?)(?=\n\s*(?:[A-Z][A-Z\s]+|EDUCATION|EXPERIENCE|SKILLS|PROJECTS|CERTIFICATIONS)\s*(?:\n|$)|$)',
+            # Pattern 2: Section header with underline or formatting
+            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*[\-_=]*\s*\n(.*?)(?=\n\s*[A-Z][A-Z\s]+|$)',
+            # Pattern 3: Section header with colon
+            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*:?\s*\n(.*?)(?=\n\s*[A-Z][A-Z\s]+|$)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.DOTALL | re.MULTILINE)
+            if match and len(match.group(2).strip()) > 10:  # Must have substantial content
+                return match.group(2).strip()
+        
+        return None
     
     def _is_experience_header(self, line: str) -> bool:
         """Check if line is an experience header"""
@@ -408,15 +559,32 @@ class EnhancedResumeExtractor:
     
     def _parse_experience_header(self, line: str) -> Dict[str, str]:
         """Parse experience header to extract company and title"""
-        # Try different separators
-        for sep in ['—', '–', ' - ', ' | ']:
+        # Try different separators in order of preference
+        separators = ['—', '–', ' — ', ' – ', ' - ', ' | ', ' at ', '@']
+        
+        for sep in separators:
             if sep in line:
                 parts = [part.strip() for part in line.split(sep, 1)]
                 if len(parts) == 2:
-                    return {'company': parts[0], 'title': parts[1]}
+                    # Determine which part is company vs title based on common patterns
+                    part1, part2 = parts[0], parts[1]
+                    
+                    # If first part has company indicators (Pvt, Ltd, Inc, Corp)
+                    if any(indicator in part1.lower() for indicator in ['pvt', 'ltd', 'inc', 'corp', 'llc', 'company', 'technologies', 'studio']):
+                        return {'company': part1, 'title': part2}
+                    # If second part has company indicators
+                    elif any(indicator in part2.lower() for indicator in ['pvt', 'ltd', 'inc', 'corp', 'llc', 'company', 'technologies', 'studio']):
+                        return {'company': part2, 'title': part1}
+                    # Default: first part is company
+                    else:
+                        return {'company': part1, 'title': part2}
+        
+        # Check if it's just a company name (has company indicators)
+        if any(indicator in line.lower() for indicator in ['pvt', 'ltd', 'inc', 'corp', 'llc', 'company', 'technologies', 'studio']):
+            return {'company': line, 'title': 'Not specified'}
         
         # Fallback: assume it's just a title
-        return {'title': line, 'company': 'Not specified'}
+        return {'company': 'Not specified', 'title': line}
     
     def _contains_date_or_location(self, line: str) -> bool:
         """Check if line contains dates or location information"""
@@ -459,13 +627,63 @@ class EnhancedResumeExtractor:
                 return line.strip()
         return None
     
-    def _is_project_header(self, line: str) -> bool:
-        """Check if line is a project header"""
-        return (len(line) > 5 and len(line) < 100 and
-                not line.startswith('•') and
-                (re.search(r'\([^)]+\)', line) or  # Has technologies in parentheses
-                 any(keyword in line.lower() for keyword in 
-                     ['system', 'platform', 'application', 'tool', 'framework', 'model'])))
+    def _is_degree_line(self, line: str) -> bool:
+        """Check if line contains degree information"""
+        degree_indicators = [
+            'bachelor', 'master', 'phd', 'doctorate', 'diploma', 'certificate',
+            'b.tech', 'b.e.', 'm.tech', 'm.e.', 'mba', 'mca', 'bca', 
+            'computer science', 'engineering', 'technology', '12th standard',
+            'cbse', 'intermediate', 'higher secondary'
+        ]
+        
+        return any(indicator in line.lower() for indicator in degree_indicators)
+    
+    def _is_project_title(self, line: str) -> bool:
+        """Check if line is a project title"""
+        # Should not be a bullet point
+        if line.startswith(('•', '-', '*', '·')):
+            return False
+            
+        # Should have reasonable length
+        if len(line) < 5 or len(line) > 150:
+            return False
+        
+        # Should contain project-like keywords or have technologies in parentheses
+        project_indicators = [
+            'system', 'platform', 'application', 'tool', 'framework', 'model',
+            'analysis', 'management', 'tracking', 'prediction', 'classification',
+            'dashboard', 'api', 'website', 'app', 'portal', 'service'
+        ]
+        
+        has_tech_parens = bool(re.search(r'\([^)]+\)\s*$', line))
+        has_project_keywords = any(keyword in line.lower() for keyword in project_indicators)
+        
+        return has_tech_parens or has_project_keywords
+    
+    def _is_job_title_line(self, line: str) -> bool:
+        """Check if line is a job title (often in italic)"""
+        job_title_indicators = [
+            'intern', 'engineer', 'developer', 'analyst', 'scientist', 'manager',
+            'specialist', 'consultant', 'lead', 'senior', 'junior', 'associate'
+        ]
+        
+        return any(indicator in line.lower() for indicator in job_title_indicators)
+    
+    def _is_achievement_line(self, line: str) -> bool:
+        """Check if line is an achievement (even without bullet)"""
+        if line.startswith(('•', '-', '*', '·')):
+            return True
+        
+        # Lines that start with action verbs are likely achievements
+        action_verbs = [
+            'achieved', 'developed', 'implemented', 'created', 'built', 'designed',
+            'delivered', 'improved', 'enhanced', 'optimized', 'reduced', 'increased',
+            'managed', 'led', 'coordinated', 'analyzed', 'processed', 'trained',
+            'deployed', 'integrated', 'automated', 'streamlined', 'collaborated'
+        ]
+        
+        first_word = line.split()[0].lower() if line.split() else ''
+        return first_word in action_verbs
 
 
 class SemanticMatcher:
