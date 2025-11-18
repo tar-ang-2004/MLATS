@@ -1002,6 +1002,7 @@ def dashboard():
 
 @app.route('/analyze', methods=['POST'])
 @limiter.limit("10 per minute")
+@csrf.exempt
 def analyze_resume():
     """Main resume analysis endpoint"""
     try:
