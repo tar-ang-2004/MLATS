@@ -1124,13 +1124,14 @@ def health():
                 'details': f"{model_stats['total_models']} models loaded",
                 'memory_info': model_stats.get('memory_info', {}),
                 'models': model_stats.get('models', {})
+            }
         else:
             health_checks['ml_models'] = {
                 'status': 'warning',
                 'details': 'ML models disabled - running in lightweight mode',
                 'memory_info': {},
                 'models': {}
-        }
+            }
     except Exception as e:
         health_checks['ml_models'] = {
             'status': 'degraded',
