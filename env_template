@@ -9,8 +9,7 @@ DATABASE_URL=sqlite:///instance/ats_resume_checker.db
 # POSTGRES_USER=ats_user  
 # POSTGRES_PASSWORD=secure_password_123
 
-# Redis settings for rate limiting (optional)
-# REDIS_URL=redis://localhost:6379/0
+# Rate limiting uses memory backend (no Redis required)
 
 # File upload settings
 MAX_CONTENT_LENGTH=16777216

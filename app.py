@@ -97,8 +97,7 @@ try:
 except Exception as e:
     print(f"Warning: could not register CSV export listeners: {e}")
 
-# Initialize Redis cache and rate limiter
-from cache_utils import cache
+# Rate limiter initialization (memory-based)
 
 # Initialize metrics (optional, graceful degradation if not available)
 try:
@@ -109,22 +108,13 @@ except ImportError:
     app_metrics = None
     print("Warning: Prometheus metrics not available. Install prometheus-flask-exporter for monitoring.")
 
-# Configure rate limiter with Redis backend if available
-redis_url = app.config.get('REDIS_URL', 'redis://localhost:6379/1')
-try:
-    limiter = Limiter(
-        key_func=get_remote_address,
-        default_limits=["200 per hour", "50 per 15 minutes"],
-        storage_uri=redis_url
-    )
-    app.logger.info("Rate limiter initialized with Redis backend")
-except Exception as e:
-    # Fallback to memory storage
-    limiter = Limiter(
-        key_func=get_remote_address,
-        default_limits=["100 per hour"]
-    )
-    app.logger.warning(f"Rate limiter using memory storage: {e}")
+# Configure rate limiter with memory backend
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per hour", "50 per 15 minutes"],
+    storage_uri="memory://"
+)
+app.logger.info("Rate limiter initialized with memory backend")
 
 limiter.init_app(app)
 
@@ -1050,24 +1040,12 @@ def health():
         overall_healthy = False
         app.logger.error(f"Database health check failed: {str(e)}")
     
-    # Redis connectivity check
-    try:
-        start_time = time.time()
-        cache.redis_client.ping() if cache.connected else None
-        redis_time = time.time() - start_time
-        
-        health_checks['redis'] = {
-            'status': 'healthy' if cache.connected else 'degraded',
-            'response_time_ms': round(redis_time * 1000, 2) if cache.connected else None,
-            'details': 'Redis connection successful' if cache.connected else 'Redis not available - using fallback'
-        }
-    except Exception as e:
-        health_checks['redis'] = {
-            'status': 'degraded',
-            'error': str(e),
-            'details': 'Redis connection failed - using fallback'
-        }
-        # Redis failure is not critical, don't mark overall as unhealthy
+    # Cache status (memory-only)
+    health_checks['cache'] = {
+        'status': 'healthy',
+        'response_time_ms': 0,
+        'details': 'Memory-based caching and rate limiting active'
+    }
     
     # File system checks
     directory_checks = {}

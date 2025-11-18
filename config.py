@@ -74,8 +74,8 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
     
-    # Rate limiting
-    RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or 'memory://'
+    # Rate limiting (memory-based)
+    RATELIMIT_STORAGE_URL = 'memory://'
     RATELIMIT_DEFAULT = "100 per hour"
     
     # Analytics and monitoring
