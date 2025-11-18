@@ -35,7 +35,7 @@ try:
     from ats_components import ATSScorer, ResumeParser, ResumeExtractor, ContactExtractor, SemanticMatcher
     ML_AVAILABLE = True
 except ImportError as e:
-    app.logger.warning(f"ML dependencies not available: {e}. Using fallback implementations.")
+    logging.warning(f"ML dependencies not available: {e}. Using fallback implementations.")
     ML_AVAILABLE = False
     # Create fallback classes for essential functionality
     class ATSScorer:
