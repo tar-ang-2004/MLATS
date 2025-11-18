@@ -30,8 +30,43 @@ from logging_config import setup_logging
 if 'ats_components' in sys.modules:
     importlib.reload(sys.modules['ats_components'])
 
-# Import our ATS components
-from ats_components import ATSScorer, ResumeParser, ResumeExtractor, ContactExtractor, SemanticMatcher
+# Import our ATS components with fallback handling
+try:
+    from ats_components import ATSScorer, ResumeParser, ResumeExtractor, ContactExtractor, SemanticMatcher
+    ML_AVAILABLE = True
+except ImportError as e:
+    app.logger.warning(f"ML dependencies not available: {e}. Using fallback implementations.")
+    ML_AVAILABLE = False
+    # Create fallback classes for essential functionality
+    class ATSScorer:
+        def __init__(self, *args, **kwargs):
+            pass
+        def calculate_score(self, *args, **kwargs):
+            return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
+    
+    class ResumeParser:
+        def __init__(self, *args, **kwargs):
+            pass
+        def parse_resume(self, *args, **kwargs):
+            return {'skills': [], 'experience': [], 'education': []}
+    
+    class ResumeExtractor:
+        def __init__(self, *args, **kwargs):
+            pass
+        def extract_text(self, file_path):
+            return "Text extraction disabled - ML dependencies not available"
+    
+    class ContactExtractor:
+        def __init__(self, *args, **kwargs):
+            pass
+        def extract_contact_info(self, *args, **kwargs):
+            return {'email': '', 'phone': '', 'name': ''}
+    
+    class SemanticMatcher:
+        def __init__(self, *args, **kwargs):
+            pass
+        def match_skills(self, *args, **kwargs):
+            return [], []
 
 # Initialize Flask app with configuration
 app = Flask(__name__)
@@ -1080,14 +1115,21 @@ def health():
     
     # ML Models check
     try:
-        from model_manager import model_manager
-        model_stats = model_manager.get_model_stats()
-        
-        health_checks['ml_models'] = {
-            'status': 'healthy',
-            'details': f"{model_stats['total_models']} models loaded",
-            'memory_info': model_stats.get('memory_info', {}),
-            'models': model_stats.get('models', {})
+        if ML_AVAILABLE:
+            from model_manager import model_manager
+            model_stats = model_manager.get_model_stats()
+            
+            health_checks['ml_models'] = {
+                'status': 'healthy',
+                'details': f"{model_stats['total_models']} models loaded",
+                'memory_info': model_stats.get('memory_info', {}),
+                'models': model_stats.get('models', {})
+        else:
+            health_checks['ml_models'] = {
+                'status': 'warning',
+                'details': 'ML models disabled - running in lightweight mode',
+                'memory_info': {},
+                'models': {}
         }
     except Exception as e:
         health_checks['ml_models'] = {
