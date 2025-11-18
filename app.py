@@ -67,63 +67,152 @@ except ImportError as e:
             resume_lower = resume_text.lower()
             job_lower = job_description.lower() if job_description else ''
             
-            # Skills scoring based on keyword matching
+            # Enhanced Skills scoring with job matching
             found_skills = []
+            job_skills = []
+            
+            # Extract skills from job description if provided
+            if job_description and len(job_description) > 50:
+                for skill in self.common_skills:
+                    if skill.lower() in job_lower:
+                        job_skills.append(skill)
+            
+            # Find skills in resume
             for skill in self.common_skills:
                 if skill.lower() in resume_lower:
                     found_skills.append(skill)
             
-            skills_score = min(95, 30 + (len(found_skills) * 8))  # Base 30, +8 per skill, max 95
+            # Calculate base skills score
+            base_skills = len(found_skills)
+            skills_score = min(95, 25 + (base_skills * 6))  # Base 25, +6 per skill
             
-            # Header scoring (look for contact info patterns)
-            header_score = 40  # Base score
-            if re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', resume_text):
-                header_score += 25
-            if re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', resume_text):
-                header_score += 15
-            if any(word in resume_lower for word in ['linkedin', 'github', 'portfolio']):
+            # Bonus for job-relevant skills
+            if job_skills:
+                relevant_matches = [skill for skill in found_skills if skill in job_skills]
+                job_match_bonus = len(relevant_matches) * 8  # +8 per job-relevant skill
+                skills_score = min(95, skills_score + job_match_bonus)
+            
+            # Header scoring (comprehensive contact info analysis)
+            header_score = 20  # Lower base score
+            email_found = bool(re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', resume_text))
+            phone_found = bool(re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', resume_text))
+            
+            if email_found:
+                header_score += 30  # Email is crucial
+            if phone_found:
+                header_score += 20  # Phone is important
+            if any(word in resume_lower for word in ['linkedin', 'github']):
+                header_score += 15  # Professional profiles
+            if any(word in resume_lower for word in ['portfolio', 'website', 'blog']):
+                header_score += 10  # Additional online presence
+            
+            # Name detection bonus
+            lines = resume_text.split('\n')
+            potential_name_found = False
+            for line in lines[:10]:  # Check first 10 lines
+                if re.match(r'^[A-Z][a-zA-Z\s]{2,40}$', line.strip()):
+                    potential_name_found = True
+                    break
+            if potential_name_found:
                 header_score += 10
+                
             header_score = min(95, header_score)
             
-            # Experience scoring (look for date patterns and experience keywords)
-            experience_indicators = ['experience', 'worked', 'developed', 'managed', 'led', 'created', 'implemented']
+            # Enhanced Experience scoring
+            experience_indicators = [
+                'experience', 'worked', 'employed', 'position', 'role', 'job',
+                'developed', 'managed', 'led', 'created', 'implemented', 'designed',
+                'responsible', 'achieved', 'delivered', 'coordinated', 'supervised'
+            ]
+            
             exp_count = sum(1 for indicator in experience_indicators if indicator in resume_lower)
-            date_patterns = len(re.findall(r'\b(19|20)\d{2}\b', resume_text))  # Years
-            experience_score = min(95, 35 + (exp_count * 5) + (date_patterns * 3))
+            date_patterns = len(re.findall(r'\b(19|20)\d{2}\b', resume_text))
+            company_indicators = resume_lower.count('inc') + resume_lower.count('corp') + resume_lower.count('ltd')
             
-            # Projects scoring
-            project_indicators = ['project', 'built', 'developed', 'created', 'designed', 'github']
+            # Base experience score
+            experience_score = 20  # Lower base
+            experience_score += min(30, exp_count * 3)  # +3 per experience indicator, max 30
+            experience_score += min(25, date_patterns * 4)  # +4 per year mentioned, max 25
+            experience_score += min(20, company_indicators * 10)  # +10 per company indicator, max 20
+            experience_score = min(95, experience_score)
+            
+            # Enhanced Projects scoring
+            project_indicators = [
+                'project', 'built', 'developed', 'created', 'designed', 'implemented',
+                'github', 'repository', 'application', 'system', 'website', 'software'
+            ]
+            
             proj_count = sum(1 for indicator in project_indicators if indicator in resume_lower)
-            projects_score = min(95, 30 + (proj_count * 8))
+            github_mentions = resume_lower.count('github') + resume_lower.count('git')
+            tech_diversity = len([skill for skill in found_skills if any(tech in skill.lower() for tech in ['python', 'java', 'react', 'node'])])
             
-            # Education scoring
-            edu_indicators = ['university', 'college', 'degree', 'bachelor', 'master', 'phd', 'education', 'graduated']
-            edu_count = sum(1 for indicator in edu_indicators if indicator in resume_lower)
-            education_score = min(95, 40 + (edu_count * 10))
+            projects_score = 15  # Lower base
+            projects_score += min(35, proj_count * 4)  # +4 per project indicator, max 35
+            projects_score += min(25, github_mentions * 12)  # +12 per git mention, max 25
+            projects_score += min(25, tech_diversity * 5)  # +5 per diverse tech, max 25
+            projects_score = min(95, projects_score)
             
-            # Format scoring (basic text quality checks)
-            format_score = 50  # Base score
+            # Enhanced Education scoring
+            edu_keywords = ['university', 'college', 'institute', 'school', 'academy']
+            degree_keywords = ['bachelor', 'master', 'phd', 'degree', 'diploma', 'certificate', 'b.s', 'm.s', 'b.tech']
+            
+            edu_institutions = sum(1 for keyword in edu_keywords if keyword in resume_lower)
+            degree_mentions = sum(1 for keyword in degree_keywords if keyword in resume_lower)
+            gpa_mention = bool(re.search(r'\b(gpa|cgpa)\b|\b[3-4]\.[0-9]\b', resume_lower))
+            
+            education_score = 25  # Moderate base
+            education_score += min(40, edu_institutions * 20)  # +20 per institution, max 40
+            education_score += min(25, degree_mentions * 8)   # +8 per degree mention, max 25
+            if gpa_mention:
+                education_score += 15  # GPA mention bonus
+            education_score = min(95, education_score)
+            
+            # Enhanced Format scoring
             word_count = len(resume_text.split())
-            if word_count > 200:
-                format_score += 20
-            if word_count > 400:
-                format_score += 15
-            if len(resume_text) > 1000:
-                format_score += 10
+            line_count = len([line for line in resume_text.split('\n') if line.strip()])
+            char_count = len(resume_text)
+            
+            format_score = 30  # Base format score
+            
+            # Length appropriateness
+            if 300 <= word_count <= 800:
+                format_score += 25  # Ideal length
+            elif 200 <= word_count < 300 or 800 < word_count <= 1200:
+                format_score += 15  # Acceptable length
+            elif word_count > 100:
+                format_score += 10  # At least some content
+            
+            # Structure indicators
+            bullet_points = resume_text.count('•') + resume_text.count('-') + resume_text.count('*')
+            if bullet_points > 5:
+                format_score += 15  # Good formatting
+            
+            # Section headers (case insensitive)
+            sections = ['experience', 'education', 'skills', 'projects']
+            section_count = sum(1 for section in sections if section in resume_lower)
+            format_score += min(25, section_count * 8)  # +8 per section, max 25
+            
             format_score = min(95, format_score)
             
-            # Job description matching bonus
-            if job_description and len(job_description) > 50:
-                job_skills = [skill for skill in self.common_skills if skill.lower() in job_lower]
-                resume_job_matches = [skill for skill in job_skills if skill.lower() in resume_lower]
-                match_bonus = len(resume_job_matches) * 5
-                skills_score = min(95, skills_score + match_bonus)
-            
-            # Calculate overall score
+            # Calculate weighted overall score
             overall_score = round(
-                (skills_score * 0.3 + experience_score * 0.25 + header_score * 0.15 + 
-                 projects_score * 0.15 + education_score * 0.1 + format_score * 0.05), 1
+                (skills_score * 0.35 + experience_score * 0.25 + projects_score * 0.15 + 
+                 education_score * 0.12 + header_score * 0.08 + format_score * 0.05), 1
             )
+            
+            # Determine missing skills based on job description or common important skills
+            missing_skills = []
+            if job_skills:
+                # Missing skills from job requirements
+                missing_skills = [skill for skill in job_skills if skill not in found_skills]
+            else:
+                # Generic important skills not found
+                important_skills = ['python', 'java', 'javascript', 'sql', 'git', 'html', 'css']
+                missing_skills = [skill for skill in important_skills if skill not in found_skills]
+            
+            # Create performance message
+            performance_level = "Excellent" if overall_score >= 85 else "Good" if overall_score >= 70 else "Fair" if overall_score >= 50 else "Needs Improvement"
+            message = f'Enhanced fallback analysis: {performance_level} resume with {len(found_skills)} skills detected from {word_count} words'
             
             return {
                 'overall_score': overall_score,
@@ -133,43 +222,265 @@ except ImportError as e:
                 'projects_score': projects_score,
                 'education_score': education_score,
                 'format_score': format_score,
-                'matched_skills': found_skills[:10],  # Top 10 matched skills
-                'missing_skills': [skill for skill in self.common_skills[:5] if skill not in found_skills],
-                'message': f'Fallback scoring - Found {len(found_skills)} skills, {word_count} words'
+                'matched_skills': found_skills[:15],  # Top 15 matched skills
+                'missing_skills': missing_skills[:8],  # Top 8 missing skills
+                'message': message
             }
     
     class ResumeParser:
         def __init__(self, *args, **kwargs):
             self.common_skills = [
                 'python', 'java', 'javascript', 'react', 'angular', 'node.js', 'sql', 'mongodb',
-                'aws', 'azure', 'docker', 'kubernetes', 'git', 'html', 'css', 'typescript'
+                'aws', 'azure', 'docker', 'kubernetes', 'git', 'html', 'css', 'typescript',
+                'c++', 'c#', '.net', 'php', 'ruby', 'swift', 'kotlin', 'go', 'rust',
+                'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn', 'machine learning',
+                'data science', 'artificial intelligence', 'deep learning', 'nlp'
             ]
             
         def parse_resume(self, resume_text, *args, **kwargs):
             if not resume_text:
-                return {'skills': [], 'experience': [], 'education': []}
+                return {'skills': [], 'experience': [], 'education': [], 'projects': [], 'certifications': []}
                 
             resume_lower = resume_text.lower()
+            lines = resume_text.split('\n')
             
             # Extract skills
             skills = [skill for skill in self.common_skills if skill.lower() in resume_lower]
             
-            # Extract basic experience info
-            experience = []
-            if 'experience' in resume_lower or 'work' in resume_lower:
-                experience = ['Professional experience found (details require full ML parsing)']
+            # Enhanced experience extraction
+            experience = self._extract_experience(lines, resume_text)
             
-            # Extract education info
-            education = []
-            edu_keywords = ['university', 'college', 'degree', 'bachelor', 'master']
-            if any(keyword in resume_lower for keyword in edu_keywords):
-                education = ['Education details found (details require full ML parsing)']
+            # Enhanced education extraction  
+            education = self._extract_education(lines, resume_text)
+            
+            # Enhanced projects extraction
+            projects = self._extract_projects(lines, resume_text)
+            
+            # Extract certifications
+            certifications = self._extract_certifications(lines, resume_text)
                 
             return {
                 'skills': skills,
                 'experience': experience,
-                'education': education
+                'education': education,
+                'projects': projects,
+                'certifications': certifications
             }
+            
+        def _extract_experience(self, lines, resume_text):
+            """Extract work experience with company names, titles, and descriptions"""
+            experience = []
+            resume_lower = resume_text.lower()
+            
+            # Common company indicators
+            company_indicators = ['inc', 'corp', 'ltd', 'llc', 'company', 'technologies', 'systems', 'solutions']
+            title_indicators = ['engineer', 'developer', 'analyst', 'manager', 'specialist', 'consultant', 'intern', 'lead']
+            
+            # Look for date patterns (years)
+            years = re.findall(r'\b(19|20)\d{2}\b', resume_text)
+            
+            current_exp = {}
+            in_experience_section = False
+            
+            for i, line in enumerate(lines):
+                line_clean = line.strip()
+                line_lower = line_clean.lower()
+                
+                # Check if we're in experience section
+                if any(keyword in line_lower for keyword in ['experience', 'employment', 'work history', 'professional']):
+                    in_experience_section = True
+                    continue
+                    
+                # Reset if we hit another major section
+                if line_lower.startswith(('education', 'skills', 'projects', 'certifications')) and len(line_clean) < 50:
+                    in_experience_section = False
+                    
+                if in_experience_section and line_clean and len(line_clean) > 10:
+                    # Check for company name patterns
+                    if any(indicator in line_lower for indicator in company_indicators) or re.search(r'\b[A-Z][a-zA-Z\s&-]{2,30}\b', line_clean):
+                        if current_exp:
+                            experience.append(current_exp)
+                        current_exp = {
+                            'company': line_clean[:100],
+                            'title': 'Position',
+                            'description': '',
+                            'start_date': None,
+                            'end_date': None
+                        }
+                    # Check for job title patterns  
+                    elif any(indicator in line_lower for indicator in title_indicators):
+                        if current_exp:
+                            current_exp['title'] = line_clean[:100]
+                    # Add as description if we have current experience
+                    elif current_exp and len(line_clean) > 20:
+                        current_exp['description'] += line_clean + ' '
+                        
+            # Add final experience if exists
+            if current_exp:
+                experience.append(current_exp)
+                
+            # If no structured experience found but experience keywords exist, create generic entries
+            if not experience and any(keyword in resume_lower for keyword in ['experience', 'worked', 'employed']):
+                if years:
+                    experience.append({
+                        'company': 'Previous Employer',
+                        'title': 'Professional Role', 
+                        'description': f'Professional experience from {min(years)} to {max(years)}. Full details require advanced parsing.',
+                        'start_date': None,
+                        'end_date': None
+                    })
+                else:
+                    experience.append({
+                        'company': 'Professional Experience',
+                        'title': 'Various Roles',
+                        'description': 'Work experience detected. Detailed extraction requires full ML parsing.',
+                        'start_date': None,
+                        'end_date': None
+                    })
+                    
+            return experience[:5]  # Limit to 5 experiences
+            
+        def _extract_education(self, lines, resume_text):
+            """Extract education with institutions and degrees"""
+            education = []
+            resume_lower = resume_text.lower()
+            
+            # Education keywords
+            edu_keywords = ['university', 'college', 'institute', 'school', 'academy']
+            degree_keywords = ['bachelor', 'master', 'phd', 'doctorate', 'diploma', 'certificate', 'degree', 'b.s', 'm.s', 'b.a', 'm.a', 'b.tech', 'm.tech']
+            
+            current_edu = {}
+            in_education_section = False
+            
+            for line in lines:
+                line_clean = line.strip()
+                line_lower = line_clean.lower()
+                
+                # Check if we're in education section
+                if 'education' in line_lower and len(line_clean) < 50:
+                    in_education_section = True
+                    continue
+                    
+                # Reset if we hit another section
+                if line_lower.startswith(('experience', 'skills', 'projects', 'certifications')) and len(line_clean) < 50:
+                    in_education_section = False
+                    
+                if (in_education_section or any(keyword in line_lower for keyword in edu_keywords)) and line_clean:
+                    # Check for institution
+                    if any(keyword in line_lower for keyword in edu_keywords):
+                        if current_edu:
+                            education.append(current_edu)
+                        current_edu = {
+                            'institution': line_clean[:200],
+                            'degree': '',
+                            'major': '',
+                            'graduation_date': None
+                        }
+                    # Check for degree
+                    elif any(keyword in line_lower for keyword in degree_keywords) and current_edu:
+                        current_edu['degree'] = line_clean[:200]
+                    # Check for major/field
+                    elif current_edu and ('in ' in line_lower or 'major' in line_lower):
+                        current_edu['major'] = line_clean[:200]
+                        
+            # Add final education if exists
+            if current_edu:
+                education.append(current_edu)
+                
+            # If no structured education found but keywords exist, create generic entry
+            if not education and any(keyword in resume_lower for keyword in edu_keywords + degree_keywords):
+                education.append({
+                    'institution': 'Educational Institution',
+                    'degree': 'Academic Qualification',
+                    'major': 'Field of Study',
+                    'graduation_date': None
+                })
+                
+            return education[:3]  # Limit to 3 education entries
+            
+        def _extract_projects(self, lines, resume_text):
+            """Extract projects with names and descriptions"""
+            projects = []
+            resume_lower = resume_text.lower()
+            
+            project_indicators = ['project', 'built', 'developed', 'created', 'designed', 'implemented']
+            
+            current_project = {}
+            in_projects_section = False
+            
+            for line in lines:
+                line_clean = line.strip()
+                line_lower = line_clean.lower()
+                
+                # Check if we're in projects section
+                if 'project' in line_lower and len(line_clean) < 50:
+                    in_projects_section = True
+                    continue
+                    
+                # Reset if we hit another section
+                if line_lower.startswith(('experience', 'education', 'skills', 'certifications')) and len(line_clean) < 50:
+                    in_projects_section = False
+                    
+                if (in_projects_section or any(indicator in line_lower for indicator in project_indicators)) and line_clean and len(line_clean) > 10:
+                    # Potential project title
+                    if (line_clean.count(' ') < 8 and len(line_clean) < 100 and 
+                        not line_lower.startswith(('•', '-', '*', '1.', '2.', '3.'))):
+                        if current_project:
+                            projects.append(current_project)
+                        current_project = {
+                            'name': line_clean[:200],
+                            'description': '',
+                            'technologies': []
+                        }
+                    # Add to description if we have a current project
+                    elif current_project and len(line_clean) > 15:
+                        current_project['description'] += line_clean + ' '
+                        # Extract technologies from description
+                        for skill in self.common_skills:
+                            if skill.lower() in line_lower and skill not in current_project['technologies']:
+                                current_project['technologies'].append(skill)
+                                
+            # Add final project if exists
+            if current_project:
+                projects.append(current_project)
+                
+            # If no structured projects found but keywords exist, create generic entries
+            if not projects and any(keyword in resume_lower for keyword in project_indicators):
+                projects.append({
+                    'name': 'Development Project',
+                    'description': 'Project work detected in resume. Detailed extraction requires advanced parsing.',
+                    'technologies': [skill for skill in self.common_skills[:5] if skill.lower() in resume_lower]
+                })
+                
+            return projects[:5]  # Limit to 5 projects
+            
+        def _extract_certifications(self, lines, resume_text):
+            """Extract certifications and achievements"""
+            certifications = []
+            resume_lower = resume_text.lower()
+            
+            cert_keywords = ['certification', 'certified', 'certificate', 'license', 'achievement', 'award']
+            
+            for line in lines:
+                line_clean = line.strip()
+                line_lower = line_clean.lower()
+                
+                if any(keyword in line_lower for keyword in cert_keywords) and len(line_clean) > 10:
+                    certifications.append({
+                        'name': line_clean[:300],
+                        'issuer': 'Certifying Organization',
+                        'date_earned': None
+                    })
+                    
+            # Generic certification if keywords found but no specific ones
+            if not certifications and any(keyword in resume_lower for keyword in cert_keywords):
+                certifications.append({
+                    'name': 'Professional Certification',
+                    'issuer': 'Relevant Authority',
+                    'date_earned': None
+                })
+                
+            return certifications[:5]  # Limit to 5 certifications
     
     class ResumeExtractor:
         def __init__(self, *args, **kwargs):
