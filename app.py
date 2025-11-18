@@ -112,7 +112,6 @@ talisman = Talisman(
     force_https=force_https,
     strict_transport_security=True,
     content_security_policy=csp,
-    content_security_policy_nonce_in=['script-src', 'style-src']
 )
 
 # Initialize database
