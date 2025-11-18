@@ -11,17 +11,20 @@ from models import db
 from flask import Flask
 import logging
 
-# Initialize Flask app with configuration
-app = Flask(__name__)
-config = get_config()
-app.config.from_object(config)
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def reset_database():
     """Reset the database schema"""
+    # Initialize Flask app with configuration
+    app = Flask(__name__)
+    config = get_config()
+    app.config.from_object(config)
+    
+    # Initialize database with app
+    db.init_app(app)
+    
     with app.app_context():
         try:
             logger.info("Connecting to database...")
