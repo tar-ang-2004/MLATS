@@ -37,222 +37,36 @@ try:
 except ImportError as e:
     logging.warning(f"ML dependencies not available: {e}. Using fallback implementations.")
     ML_AVAILABLE = False
-    # Enhanced fallback classes with realistic scoring
-    import re
-    
+    # Create fallback classes for essential functionality
     class ATSScorer:
         def __init__(self, *args, **kwargs):
-            self.common_skills = [
-                'python', 'java', 'javascript', 'react', 'angular', 'node.js', 'sql', 'mongodb',
-                'aws', 'azure', 'docker', 'kubernetes', 'git', 'html', 'css', 'typescript',
-                'spring', 'django', 'flask', 'machine learning', 'data science', 'pandas',
-                'tensorflow', 'pytorch', 'linux', 'windows', 'agile', 'scrum', 'project management'
-            ]
-            
-        def score_resume(self, resume_text, job_description=''):
-            if not resume_text or len(resume_text.strip()) < 50:
-                return {
-                    'overall_score': 25,
-                    'skills_score': 20,
-                    'header_score': 30,
-                    'experience_score': 25,
-                    'projects_score': 20,
-                    'education_score': 25,
-                    'format_score': 30,
-                    'matched_skills': [],
-                    'missing_skills': [],
-                    'message': 'Resume too short or invalid'
-                }
-                
-            resume_lower = resume_text.lower()
-            job_lower = job_description.lower() if job_description else ''
-            
-            # Skills scoring based on keyword matching
-            found_skills = []
-            for skill in self.common_skills:
-                if skill.lower() in resume_lower:
-                    found_skills.append(skill)
-            
-            skills_score = min(95, 30 + (len(found_skills) * 8))  # Base 30, +8 per skill, max 95
-            
-            # Header scoring (look for contact info patterns)
-            header_score = 40  # Base score
-            if re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', resume_text):
-                header_score += 25
-            if re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', resume_text):
-                header_score += 15
-            if any(word in resume_lower for word in ['linkedin', 'github', 'portfolio']):
-                header_score += 10
-            header_score = min(95, header_score)
-            
-            # Experience scoring (look for date patterns and experience keywords)
-            experience_indicators = ['experience', 'worked', 'developed', 'managed', 'led', 'created', 'implemented']
-            exp_count = sum(1 for indicator in experience_indicators if indicator in resume_lower)
-            date_patterns = len(re.findall(r'\b(19|20)\d{2}\b', resume_text))  # Years
-            experience_score = min(95, 35 + (exp_count * 5) + (date_patterns * 3))
-            
-            # Projects scoring
-            project_indicators = ['project', 'built', 'developed', 'created', 'designed', 'github']
-            proj_count = sum(1 for indicator in project_indicators if indicator in resume_lower)
-            projects_score = min(95, 30 + (proj_count * 8))
-            
-            # Education scoring
-            edu_indicators = ['university', 'college', 'degree', 'bachelor', 'master', 'phd', 'education', 'graduated']
-            edu_count = sum(1 for indicator in edu_indicators if indicator in resume_lower)
-            education_score = min(95, 40 + (edu_count * 10))
-            
-            # Format scoring (basic text quality checks)
-            format_score = 50  # Base score
-            word_count = len(resume_text.split())
-            if word_count > 200:
-                format_score += 20
-            if word_count > 400:
-                format_score += 15
-            if len(resume_text) > 1000:
-                format_score += 10
-            format_score = min(95, format_score)
-            
-            # Job description matching bonus
-            if job_description and len(job_description) > 50:
-                job_skills = [skill for skill in self.common_skills if skill.lower() in job_lower]
-                resume_job_matches = [skill for skill in job_skills if skill.lower() in resume_lower]
-                match_bonus = len(resume_job_matches) * 5
-                skills_score = min(95, skills_score + match_bonus)
-            
-            # Calculate overall score
-            overall_score = round(
-                (skills_score * 0.3 + experience_score * 0.25 + header_score * 0.15 + 
-                 projects_score * 0.15 + education_score * 0.1 + format_score * 0.05), 1
-            )
-            
-            return {
-                'overall_score': overall_score,
-                'skills_score': skills_score,
-                'header_score': header_score,
-                'experience_score': experience_score,
-                'projects_score': projects_score,
-                'education_score': education_score,
-                'format_score': format_score,
-                'matched_skills': found_skills[:10],  # Top 10 matched skills
-                'missing_skills': [skill for skill in self.common_skills[:5] if skill not in found_skills],
-                'message': f'Fallback scoring - Found {len(found_skills)} skills, {word_count} words'
-            }
+            pass
+        def calculate_score(self, *args, **kwargs):
+            return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
     
     class ResumeParser:
         def __init__(self, *args, **kwargs):
-            self.common_skills = [
-                'python', 'java', 'javascript', 'react', 'angular', 'node.js', 'sql', 'mongodb',
-                'aws', 'azure', 'docker', 'kubernetes', 'git', 'html', 'css', 'typescript'
-            ]
-            
-        def parse_resume(self, resume_text, *args, **kwargs):
-            if not resume_text:
-                return {'skills': [], 'experience': [], 'education': []}
-                
-            resume_lower = resume_text.lower()
-            
-            # Extract skills
-            skills = [skill for skill in self.common_skills if skill.lower() in resume_lower]
-            
-            # Extract basic experience info
-            experience = []
-            if 'experience' in resume_lower or 'work' in resume_lower:
-                experience = ['Professional experience found (details require full ML parsing)']
-            
-            # Extract education info
-            education = []
-            edu_keywords = ['university', 'college', 'degree', 'bachelor', 'master']
-            if any(keyword in resume_lower for keyword in edu_keywords):
-                education = ['Education details found (details require full ML parsing)']
-                
-            return {
-                'skills': skills,
-                'experience': experience,
-                'education': education
-            }
+            pass
+        def parse_resume(self, *args, **kwargs):
+            return {'skills': [], 'experience': [], 'education': []}
     
     class ResumeExtractor:
         def __init__(self, *args, **kwargs):
             pass
-            
         def extract_text(self, file_path):
-            try:
-                if file_path.endswith('.pdf'):
-                    with open(file_path, 'rb') as file:
-                        reader = PyPDF2.PdfReader(file)
-                        text = ""
-                        for page in reader.pages:
-                            text += page.extract_text()
-                        return text if text.strip() else "PDF text extraction failed - content may be image-based"
-                        
-                elif file_path.endswith('.docx'):
-                    doc = Document(file_path)
-                    return "\n".join([paragraph.text for paragraph in doc.paragraphs])
-                    
-                elif file_path.endswith('.txt'):
-                    with open(file_path, 'r', encoding='utf-8') as file:
-                        return file.read()
-                        
-                else:
-                    return "Unsupported file format"
-                    
-            except Exception as e:
-                return f"Text extraction error: {str(e)}"
+            return "Text extraction disabled - ML dependencies not available"
     
     class ContactExtractor:
         def __init__(self, *args, **kwargs):
             pass
-            
-        def extract_contact_info(self, resume_text, *args, **kwargs):
-            if not resume_text:
-                return {'email': '', 'phone': '', 'name': ''}
-                
-            # Extract email
-            email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', resume_text)
-            email = email_match.group() if email_match else ''
-            
-            # Extract phone
-            phone_match = re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', resume_text)
-            phone = phone_match.group() if phone_match else ''
-            
-            # Extract name (basic heuristic - first few words that look like names)
-            lines = resume_text.split('\n')
-            name = ''
-            for line in lines[:5]:  # Check first 5 lines
-                line = line.strip()
-                if len(line) > 0 and len(line) < 50:  # Reasonable name length
-                    # Check if line contains mostly letters and spaces
-                    if re.match(r'^[A-Za-z\s\.-]+$', line) and len(line.split()) <= 4:
-                        name = line
-                        break
-            
-            return {
-                'email': email,
-                'phone': phone,
-                'name': name
-            }
+        def extract_contact_info(self, *args, **kwargs):
+            return {'email': '', 'phone': '', 'name': ''}
     
     class SemanticMatcher:
         def __init__(self, *args, **kwargs):
             pass
-            
-        def match_skills(self, resume_skills, job_skills, *args, **kwargs):
-            # Simple string matching as fallback
-            if not resume_skills or not job_skills:
-                return [], job_skills[:5] if job_skills else []
-                
-            matched = []
-            missing = []
-            
-            resume_lower = [skill.lower() for skill in resume_skills]
-            
-            for job_skill in job_skills:
-                if job_skill.lower() in resume_lower:
-                    matched.append(job_skill)
-                else:
-                    missing.append(job_skill)
-                    
-            return matched, missing[:10]  # Limit to 10 missing skills
+        def match_skills(self, *args, **kwargs):
+            return [], []
 
 # Initialize Flask app with configuration
 app = Flask(__name__)
@@ -298,6 +112,7 @@ talisman = Talisman(
     force_https=force_https,
     strict_transport_security=True,
     content_security_policy=csp,
+    content_security_policy_nonce_in=['script-src', 'style-src']
 )
 
 # Initialize database
@@ -782,7 +597,6 @@ def ai_models():
     return render_template('ai.html')
 
 @app.route('/analyze', methods=['POST'])
-@csrf.exempt
 def analyze_resume():
     """Analyze uploaded resume"""
     # Generate session ID for processing tracking
@@ -848,16 +662,16 @@ def analyze_resume():
         # Parse resume with tracking
         if processing_tracking_available:
             with processing_tracker.track_stage(session_id, "resume_parsing", {"text_length": len(resume_text)}):
-                parsed_resume = resume_parser.parse_resume(resume_text)
+                parsed_resume = resume_parser.parse(resume_text)
         else:
-            parsed_resume = resume_parser.parse_resume(resume_text)
+            parsed_resume = resume_parser.parse(resume_text)
         
         # Extract contact information with tracking
         if processing_tracking_available:
             with processing_tracker.track_stage(session_id, "contact_extraction"):
-                contact_info = contact_extractor.extract_contact_info(resume_text)
+                contact_info = contact_extractor.extract_contact(resume_text)
         else:
-            contact_info = contact_extractor.extract_contact_info(resume_text)
+            contact_info = contact_extractor.extract_contact(resume_text)
         
         # Score the resume with tracking
         if processing_tracking_available:

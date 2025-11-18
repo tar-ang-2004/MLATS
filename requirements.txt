@@ -10,7 +10,10 @@ PyMuPDF>=1.23.0
 pdfplumber>=0.10.0
 python-docx>=1.0.0
 # textract>=1.6.0  # Removed due to invalid metadata issues on Heroku
-sentence-transformers>=2.2.0  # Essential for semantic matching
+
+# ML dependencies commented out due to Heroku 500MB slug size limit
+# sentence-transformers>=2.2.0  # ~4GB with PyTorch - exceeds Heroku limits
+# Using enhanced fallback classes with better scoring logic
 # spacy>=3.7.0  # Removed - too large for Heroku  
 # matplotlib>=3.7.0  # Removed - not essential for API
 # seaborn>=0.12.0  # Removed - not essential for API
