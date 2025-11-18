@@ -114,7 +114,14 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Use DATABASE_URL if available, otherwise raise error at runtime
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://localhost/ats_resume_checker'
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL:
+        # Normalize old Heroku-style URLs
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/ats_resume_checker'
     
     # Production security - use environment variables (REQUIRED)
     SECRET_KEY = os.environ.get('SECRET_KEY')
