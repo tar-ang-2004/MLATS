@@ -388,6 +388,9 @@ except ImportError as e:
             current_edu = None
             in_education_section = False
             
+            print(f"DEBUG: Starting education extraction. Total lines: {len(lines)}")
+            print(f"DEBUG: Looking for education section...")
+            
             # Degree patterns - these should be identified as degrees, not institutions
             degree_patterns = [
                 r'bachelor\s+of\s+technology[\s–-]*.*',
@@ -422,6 +425,7 @@ except ImportError as e:
                 # Check if we're in education section
                 if 'education' in line_lower and len(line_clean) < 30:
                     in_education_section = True
+                    print(f"DEBUG: Found education section: {line_clean}")
                     continue
                     
                 # Stop at other sections
@@ -469,7 +473,7 @@ except ImportError as e:
                         not any(re.search(pattern, line_lower) for pattern in degree_patterns)):
                         current_edu['field'] = line_clean
             
-            # Add final education
+            # Clean up and validate education entries
             if current_edu:
                 education.append(current_edu)
             
@@ -477,19 +481,38 @@ except ImportError as e:
             valid_education = []
             for edu in education:
                 # Skip entries that are clearly degrees misidentified as institutions
-                if any(re.search(pattern, edu['institution'].lower()) for pattern in degree_patterns):
+                if edu.get('institution') and any(re.search(pattern, edu['institution'].lower()) for pattern in degree_patterns):
                     continue
                     
                 # Only add if we have a valid institution
-                if edu['institution'] and len(edu['institution']) > 3:
+                if edu.get('institution') and len(edu['institution']) > 3:
                     # If no degree specified and we have a field, that's fine
-                    if not edu['degree'] and not edu['field']:
+                    if not edu.get('degree') and not edu.get('field'):
                         edu['degree'] = 'Degree information not available'
                     valid_education.append(edu)
             
-            return valid_education
+            # Fallback: if no education found with strict parsing, try simpler extraction
+            if not valid_education:
+                # Look for any line containing institution keywords + degree keywords
+                for line in lines:
+                    line_clean = line.strip()
+                    line_lower = line_clean.lower()
+                    
+                    # If line contains both institution and degree indicators
+                    if (any(word in line_lower for word in institution_keywords) and 
+                        any(re.search(pattern, line_lower) for pattern in degree_patterns[:4]) and  # Focus on common degrees
+                        len(line_clean) > 10):
+                        
+                        valid_education.append({
+                            'institution': line_clean,
+                            'degree': 'Degree information extracted from institution line',
+                            'dates': '',
+                            'field': ''
+                        })
+                        break
             
-            return education[:3]
+            print(f"DEBUG: Final education extraction result: {valid_education}")
+            return valid_education[:3]
             
         def _extract_projects(self, lines, resume_text):
             """Extract projects with detailed bullet points and achievements"""
