@@ -41,8 +41,19 @@ except ImportError as e:
     class ATSScorer:
         def __init__(self, *args, **kwargs):
             pass
-        def calculate_score(self, *args, **kwargs):
-            return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
+        def score_resume(self, *args, **kwargs):
+            return {
+                'overall_score': 50,
+                'skills_score': 50,
+                'header_score': 50,
+                'experience_score': 50,
+                'projects_score': 50,
+                'education_score': 50,
+                'format_score': 50,
+                'matched_skills': [],
+                'missing_skills': [],
+                'message': 'ML features disabled - basic scoring only'
+            }
     
     class ResumeParser:
         def __init__(self, *args, **kwargs):
