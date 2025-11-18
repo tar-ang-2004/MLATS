@@ -291,12 +291,11 @@ class EnhancedResumeExtractor:
         current_exp = None
         current_achievements = []
         
-        for i, line in enumerate(lines):
-            # Skip empty lines
-            if not line:
-                continue
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             
-            # Check for company/title header (like "Labmentix Pvt. Ltd. — Artificial Intelligence & Data Science Intern")
+            # Check for company/title header
             if self._is_experience_header(line):
                 # Save previous experience
                 if current_exp:
@@ -307,32 +306,32 @@ class EnhancedResumeExtractor:
                 # Parse new experience header
                 current_exp = self._parse_experience_header(line)
                 current_achievements = []
+                i += 1
                 
-                # Look ahead for dates and location in next lines
-                for j in range(i + 1, min(i + 4, len(lines))):
-                    next_line = lines[j]
+                # Look for dates/location in next line
+                if i < len(lines) and self._contains_date_or_location(lines[i]):
+                    dates, location = self._parse_date_location(lines[i])
+                    if dates:
+                        current_exp['dates'] = dates
+                    if location:
+                        current_exp['location'] = location
+                    i += 1
+                
+                # Continue parsing achievements until next company header
+                while i < len(lines) and not self._is_experience_header(lines[i]):
+                    achievement_line = lines[i].strip()
                     
-                    # Skip bullet points when looking for dates/location
-                    if next_line.startswith(('•', '-', '*', '·')):
-                        break
+                    # Check for bullet points or achievement lines
+                    if (achievement_line.startswith(('•', '-', '*', '·')) or 
+                        (achievement_line and len(achievement_line) > 15 and not self._contains_date_or_location(achievement_line))):
+                        
+                        achievement = achievement_line.lstrip('•-*· ').strip()
+                        if len(achievement) > 15:  # Must be meaningful
+                            current_achievements.append(achievement)
                     
-                    if self._contains_date_or_location(next_line):
-                        dates, location = self._parse_date_location(next_line)
-                        if dates:
-                            current_exp['dates'] = dates
-                        if location:
-                            current_exp['location'] = location
-                        break
-            
-            # Check for job title line (italic text pattern)
-            elif current_exp and not current_exp.get('title') and self._is_job_title_line(line):
-                current_exp['title'] = line
-            
-            # Check for achievements/bullet points
-            elif line.startswith(('•', '-', '*', '·')) or (current_exp and self._is_achievement_line(line)):
-                achievement = line.lstrip('•-*· ').strip()
-                if len(achievement) > 15:  # Meaningful achievement
-                    current_achievements.append(achievement)
+                    i += 1
+            else:
+                i += 1
         
         # Don't forget the last experience
         if current_exp:
@@ -440,11 +439,10 @@ class EnhancedResumeExtractor:
         current_project = None
         current_achievements = []
         
-        for i, line in enumerate(lines):
-            # Skip empty lines
-            if not line:
-                continue
-                
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            
             # Check if this is a project title (not a bullet point)
             if not line.startswith(('•', '-', '*', '·')) and self._is_project_title(line):
                 # Save previous project if exists
@@ -456,31 +454,39 @@ class EnhancedResumeExtractor:
                 # Start new project
                 project_name = line
                 technologies = ''
+                github_link = ''
                 
-                # Extract technologies in parentheses
-                tech_match = re.search(r'\(([^)]+)\)\s*$', line)
+                # Extract technologies and GitHub link from the same line
+                tech_match = re.search(r'\(([^)]+)\)\s*(?:\[GitHub\])?\s*$', line)
                 if tech_match:
                     technologies = tech_match.group(1)
-                    project_name = re.sub(r'\s*\([^)]+\)\s*$', '', line).strip()
+                    project_name = re.sub(r'\s*\([^)]+\)\s*(?:\[GitHub\])?\s*$', '', line).strip()
+                
+                if '[GitHub]' in line or 'GitHub' in line:
+                    github_link = 'Available on GitHub'
                 
                 current_project = {
                     'name': project_name,
                     'technologies': technologies,
+                    'github': github_link,
                     'achievements': []
                 }
                 current_achievements = []
+                i += 1
                 
-                # Look for GitHub link in next few lines
-                for j in range(i + 1, min(i + 3, len(lines))):
-                    if 'github' in lines[j].lower():
-                        current_project['github'] = lines[j].strip()
-                        break
-            
-            # Check if this is an achievement/bullet point
-            elif line.startswith(('•', '-', '*', '·')) or (current_project and self._is_achievement_line(line)):
-                achievement = line.lstrip('•-*· ').strip()
-                if len(achievement) > 10:  # Meaningful achievement
-                    current_achievements.append(achievement)
+                # Continue parsing achievements until next project
+                while i < len(lines) and not self._is_project_title(lines[i].strip()):
+                    achievement_line = lines[i].strip()
+                    
+                    # Check for bullet points
+                    if achievement_line.startswith(('•', '-', '*', '·')):
+                        achievement = achievement_line.lstrip('•-*· ').strip()
+                        if len(achievement) > 10:  # Meaningful achievement
+                            current_achievements.append(achievement)
+                    
+                    i += 1
+            else:
+                i += 1
         
         # Don't forget the last project
         if current_project:
@@ -533,21 +539,37 @@ class EnhancedResumeExtractor:
     
     # Helper methods
     def _extract_section(self, text: str, section_names: List[str]) -> Optional[str]:
-        """Extract a specific section from resume with improved pattern matching"""
-        # Try multiple patterns to handle different formatting styles
-        patterns = [
-            # Pattern 1: Section header followed by content (most common)
-            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*\n(.*?)(?=\n\s*(?:[A-Z][A-Z\s]+|EDUCATION|EXPERIENCE|SKILLS|PROJECTS|CERTIFICATIONS)\s*(?:\n|$)|$)',
-            # Pattern 2: Section header with underline or formatting
-            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*[\-_=]*\s*\n(.*?)(?=\n\s*[A-Z][A-Z\s]+|$)',
-            # Pattern 3: Section header with colon
-            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*:?\s*\n(.*?)(?=\n\s*[A-Z][A-Z\s]+|$)'
+        """Extract a specific section from resume with robust pattern matching"""
+        # Define all possible section headers for proper boundaries
+        all_sections = [
+            'SUMMARY', 'OBJECTIVE', 'PROFILE',
+            'SKILLS', 'TECHNICAL SKILLS', 'CORE COMPETENCIES', 'TECHNOLOGIES',
+            'EXPERIENCE', 'WORK EXPERIENCE', 'EMPLOYMENT', 'PROFESSIONAL EXPERIENCE',
+            'PROJECTS', 'PERSONAL PROJECTS', 'KEY PROJECTS',
+            'EDUCATION', 'ACADEMIC', 'QUALIFICATION', 'EDUCATIONAL BACKGROUND',
+            'CERTIFICATIONS', 'CERTIFICATES', 'ACHIEVEMENTS', 'AWARDS', 'HONORS'
         ]
         
-        for pattern in patterns:
+        # Create pattern for section boundaries (must be at start of line and all caps)
+        boundary_pattern = r'(?=\n\s*(?:' + '|'.join(all_sections) + r')\s*(?:\n|$))'
+        
+        # Try multiple patterns with proper boundary detection
+        patterns = [
+            # Pattern 1: Section header followed by content until next section
+            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*\n(.*?)' + boundary_pattern,
+            # Pattern 2: Section header followed by content until end of text
+            r'(?i)(?:^|\n)\s*(' + '|'.join(section_names) + r')\s*\n(.*?)(?=\Z)',
+            # Pattern 3: More flexible matching
+            r'(?i)(' + '|'.join(section_names) + r')\s*\n([\s\S]*?)(?=' + boundary_pattern + '|\Z)'
+        ]
+        
+        for i, pattern in enumerate(patterns):
             match = re.search(pattern, text, re.DOTALL | re.MULTILINE)
-            if match and len(match.group(2).strip()) > 10:  # Must have substantial content
-                return match.group(2).strip()
+            if match:
+                content = match.group(2).strip()
+                # Must have substantial content and not be just whitespace
+                if len(content) > 10 and not content.isspace():
+                    return content
         
         return None
     
@@ -645,20 +667,31 @@ class EnhancedResumeExtractor:
             return False
             
         # Should have reasonable length
-        if len(line) < 5 or len(line) > 150:
+        if len(line) < 10 or len(line) > 200:
             return False
         
-        # Should contain project-like keywords or have technologies in parentheses
+        # Strong indicators of project titles
+        has_tech_parens = bool(re.search(r'\([^)]+\)\s*(?:\[GitHub\])?\s*$', line))
+        has_github_link = '[GitHub]' in line or 'GitHub' in line
+        
+        # Project-like keywords
         project_indicators = [
             'system', 'platform', 'application', 'tool', 'framework', 'model',
             'analysis', 'management', 'tracking', 'prediction', 'classification',
-            'dashboard', 'api', 'website', 'app', 'portal', 'service'
+            'dashboard', 'api', 'website', 'app', 'portal', 'service', 'data'
         ]
         
-        has_tech_parens = bool(re.search(r'\([^)]+\)\s*$', line))
         has_project_keywords = any(keyword in line.lower() for keyword in project_indicators)
         
-        return has_tech_parens or has_project_keywords
+        # If it has tech stack in parentheses or GitHub link, it's likely a project
+        if has_tech_parens or has_github_link:
+            return True
+        
+        # If it has project keywords and looks like a title (title case), probably a project
+        if has_project_keywords and (line[0].isupper() or line.count(' ') >= 2):
+            return True
+            
+        return False
     
     def _is_job_title_line(self, line: str) -> bool:
         """Check if line is a job title (often in italic)"""
