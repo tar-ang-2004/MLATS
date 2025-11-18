@@ -41,52 +41,26 @@ except ImportError as e:
     class ATSScorer:
         def __init__(self, *args, **kwargs):
             pass
-            def calculate_score(self, *args, **kwargs):
-                return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
-
-            def score_resume(self, resume_text, job_description):
-                # Return a minimal scoring result compatible with the app
-                return {
-                    'skills_score': 50.0,
-                    'header_score': 50.0,
-                    'experience_score': 50.0,
-                    'projects_score': 50.0,
-                    'education_score': 50.0,
-                    'format_score': 50.0,
-                    'matched_skills': [],
-                    'missing_skills': [],
-                    'overall_score': 50
-                }
+        def calculate_score(self, *args, **kwargs):
+            return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
     
     class ResumeParser:
         def __init__(self, *args, **kwargs):
             pass
-            def parse_resume(self, *args, **kwargs):
-                return {'skills': [], 'experience': [], 'education': [], 'projects': [], 'certifications': []}
-
-            # alias used by the application
-            def parse(self, text):
-                return self.parse_resume(text)
+        def parse_resume(self, *args, **kwargs):
+            return {'skills': [], 'experience': [], 'education': []}
     
     class ResumeExtractor:
         def __init__(self, *args, **kwargs):
             pass
-            def extract_text(self, file_path):
-                return "Text extraction disabled - ML dependencies not available"
-
-            # compatibility alias if other code expects a different name
-            def extract(self, file_path):
-                return self.extract_text(file_path)
+        def extract_text(self, file_path):
+            return "Text extraction disabled - ML dependencies not available"
     
     class ContactExtractor:
         def __init__(self, *args, **kwargs):
             pass
-            def extract_contact_info(self, *args, **kwargs):
-                return {'email': '', 'phone': '', 'name': ''}
-
-            # application expects `extract_contact`
-            def extract_contact(self, text):
-                return self.extract_contact_info(text)
+        def extract_contact_info(self, *args, **kwargs):
+            return {'email': '', 'phone': '', 'name': ''}
     
     class SemanticMatcher:
         def __init__(self, *args, **kwargs):
@@ -688,16 +662,16 @@ def analyze_resume():
         # Parse resume with tracking
         if processing_tracking_available:
             with processing_tracker.track_stage(session_id, "resume_parsing", {"text_length": len(resume_text)}):
-                parsed_resume = resume_parser.parse(resume_text)
+                parsed_resume = resume_parser.parse_resume(resume_text)
         else:
-            parsed_resume = resume_parser.parse(resume_text)
+            parsed_resume = resume_parser.parse_resume(resume_text)
         
         # Extract contact information with tracking
         if processing_tracking_available:
             with processing_tracker.track_stage(session_id, "contact_extraction"):
-                contact_info = contact_extractor.extract_contact(resume_text)
+                contact_info = contact_extractor.extract_contact_info(resume_text)
         else:
-            contact_info = contact_extractor.extract_contact(resume_text)
+            contact_info = contact_extractor.extract_contact_info(resume_text)
         
         # Score the resume with tracking
         if processing_tracking_available:
