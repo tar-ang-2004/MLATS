@@ -266,7 +266,7 @@ function displayResults(data) {
         // Experience - Handle structured objects
         const experience = data.parsed_sections.experience || [];
         if (experience.length === 0) {
-            document.getElementById("detectedExperience").innerHTML = "<p class=\\"italic text-gray-500 dark:text-gray-400\\">No experience detected in resume</p>";
+            document.getElementById("detectedExperience").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No experience detected in resume</p>";
         } else {
             let html = '<div class="space-y-4">';
             experience.forEach(exp => {
@@ -302,208 +302,67 @@ function displayResults(data) {
                 
 
 
-        function calculateTenure(duration) {
-            if (!duration) return '';
-            
-            // Extract dates like "07/2025 – 12/2025" or "06/2025 – 09/2025"
-            const dateMatch = duration.match(/(\d{2})\/(\d{4})\s*[–-]\s*(\d{2})\/(\d{4})/);
-            if (dateMatch) {
-                const startMonth = parseInt(dateMatch[1]);
-                const startYear = parseInt(dateMatch[2]);
-                const endMonth = parseInt(dateMatch[3]);
-                const endYear = parseInt(dateMatch[4]);
-                
-                const totalMonths = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
-                
-                if (totalMonths < 12) {
-                    return ` [${totalMonths} months]`;
-                } else {
-                    const years = Math.floor(totalMonths / 12);
-                    const months = totalMonths % 12;
-                    if (months === 0) {
-                        return ` [${years} ${years === 1 ? 'year' : 'years'}]`;
-                    } else {
-                        return ` [${years}.${Math.round(months / 12 * 10)} years]`;
-                    }
-                }
-            }
-            
-            return '';
-        }
 
-        // Process all experience entries
-        let allExperiences = [];
-        for (const exp of experience) {
-            const expText = typeof exp === 'string' ? exp : (exp.text || JSON.stringify(exp));
-        }
-
-        // Render experiences with achievements and bullet points
-        if (allExperiences.length === 0) {
-            document.getElementById("detectedExperience").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No experience detected in resume</p>";
+        
+        // Education - Handle structured objects
+        const education = data.parsed_sections.education || [];
+        if (education.length === 0) {
+            document.getElementById("detectedEducation").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No education information detected in resume</p>";
         } else {
-            let html = '<div class="space-y-4">';
-            allExperiences.forEach((exp, index) => {
-                const tenure = calculateTenure(exp.duration);
-                html += `<div>`;
-                html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${escapeHtml(exp.company)} — ${escapeHtml(exp.title)}</p>`;
-                html += `<p class="text-sm text-gray-400 mt-1">${escapeHtml(exp.location)}${exp.location && exp.duration ? ' · ' : ''}${escapeHtml(exp.duration)}${tenure}</p>`;
-                
-                // Add achievements with bullet points
-                if (exp.achievements && exp.achievements.length > 0) {
-                    html += '<ul class="mt-2 text-sm text-gray-700 dark:text-gray-300">';
-                    exp.achievements.forEach(achievement => {
-                        html += `<li class="flex items-start mb-1"><span class="text-blue-500 mr-2">□</span>${escapeHtml(achievement)}</li>`;
-                    });
-                    html += '</ul>';
-                } else if (exp.description) {
-                    html += `<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">□ ${escapeHtml(exp.description)}</p>`;
+            let html = '<div class="space-y-3">';
+            education.forEach(edu => {
+                if (typeof edu === 'object') {
+                    html += `<div>`;
+                    html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${escapeHtml(edu.institution || 'Unknown Institution')}</p>`;
+                    if (edu.dates) {
+                        html += `<p class="text-sm text-gray-400 mt-1">${escapeHtml(edu.dates)}</p>`;
+                    }
+                    if (edu.degree && edu.degree !== 'Degree not specified') {
+                        html += `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${escapeHtml(edu.degree)}</p>`;
+                    } else {
+                        html += `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">Degree not specified</p>`;
+                    }
+                    html += `</div>`;
                 }
-                
-                html += `</div>`;
             });
             html += '</div>';
-            document.getElementById("detectedExperience").innerHTML = html;
-        }
-        
-        console.debug('Parsed ATS Experiences:', allExperiences);
-        
-        // Education - handle structured education objects
-        const education = data.parsed_sections.education || [];
-
-        // Handle structured education objects
-        let allEducation = [];
-        if (education && education.length > 0) {
-            allEducation = education.map(edu => {
-                if (typeof edu === 'object') {
-                    return {
-                        institution: edu.institution || 'Unknown Institution',
-                        degree: edu.degree || 'Degree not specified',
-                        dates: edu.dates || '',
-                        field: edu.field || ''
-                    };
-                }
-                return null;
-            }).filter(Boolean);
-        }
-
-
-        const filteredEducation = education.filter(edu => {
-            const eduText = typeof edu === 'string' ? edu : (edu.text || JSON.stringify(edu));
-            return !looksLikeCertification(eduText);
-        });
-
-        // Parse and render education
-        if (filteredEducation.length === 0) {
-            document.getElementById("detectedEducation").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No education detected in resume</p>";
-        } else {
-            let html = '';
-            filteredEducation.forEach(edu => {
-                const eduText = typeof edu === 'string' ? edu : (edu.text || JSON.stringify(edu));
-                const parsed = parseATSEducation(eduText);
-                
-                if (parsed) {
-                    html += '<div class="mb-3 pb-3 border-b border-gray-200 dark:border-gray-600 last:border-0">';
-                    html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${escapeHtml(parsed.institution)}</p>`;
-                    if (parsed.location || parsed.duration) {
-                        html += `<p class="text-sm text-gray-400 mt-1">${escapeHtml(parsed.location)}${parsed.location && parsed.duration ? ' · ' : ''}${escapeHtml(parsed.duration)}</p>`;
-                    }
-                    html += `<p class="text-sm text-gray-900 dark:text-gray-100 mt-2">${escapeHtml(parsed.degree)}</p>`;
-                    html += '</div>';
-                } else {
-                    // Fallback to original display
-                    html += `<div class="mb-3 pb-3 border-b border-gray-200 dark:border-gray-600 last:border-0"><p class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">${escapeHtml(eduText)}</p></div>`;
-                }
-            });
             document.getElementById("detectedEducation").innerHTML = html;
         }
-        
-        console.debug('Parsed ATS Education:', filteredEducation.map(edu => parseATSEducation(typeof edu === 'string' ? edu : (edu.text || JSON.stringify(edu)))));
-        
-        // Projects - Advanced parsing for ATS resume format
+
+        // Projects - Handle structured objects
         const projects = data.parsed_sections.projects || [];
-        
-        function parseATSProjects(rawText) {
-            if (!rawText) return [];
-            
-            const text = String(rawText).replace(/\u00A0/g, ' ');
-            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            
-            const projectList = [];
-            let currentProject = null;
-            
-            for (const line of lines) {
-                // COMPLETELY SKIP ALL bullet points and description lines
-                if (/^[\s\-\u2022\*•·]+/.test(line) || 
-                    /attained|built|enhanced|developed|implemented|analyzed|achieved|created|designed/i.test(line)) {
-                    continue;
-                }
-                
-                // Detect project header with technologies in parentheses
-                // Pattern: "Project Name (Technology, Stack, Framework)"
-                const projectMatch = line.match(/^(.+?)\s*\(([^)]+)\)\s*(\[.*\])?$/);
-                if (projectMatch) {
-                    if (currentProject) projectList.push(currentProject);
-                    
-                    currentProject = {
-                        name: projectMatch[1].trim(),
-                        technologies: projectMatch[2].trim(),
-                        link: projectMatch[3] ? projectMatch[3].trim() : ''
-                    };
-                    continue;
-                }
-                
-                // Alternative: detect project by keywords (System, Analysis, etc.)
-                if (/\b(System|Analysis|Platform|API|Dashboard|Tool|Application|Model|Framework|Engine|Generator|Analyzer|Predictor)\b/i.test(line) && 
-                    line.length > 10 && line.length < 100) {
-                    if (currentProject) projectList.push(currentProject);
-                    
-                    // Extract technologies if mentioned in the same line
-                    const techMatch = line.match(/\b(Python|Java|JavaScript|React|Node|ML|AI|PyTorch|TensorFlow|Tableau|SQL|MongoDB|Flask|Django|Machine Learning|Deep Learning|NLP|Computer Vision|Matplotlib|Pandas|NumPy|Scikit-learn|Seaborn)\b/gi);
-                    
-                    currentProject = {
-                        name: line.trim(),
-                        technologies: techMatch ? [...new Set(techMatch)].join(', ') : '',
-                        link: ''
-                    };
-                }
-                
-                // Add GitHub links if they appear after a project header
-                else if (currentProject && !currentProject.link && (/github|gitlab|\[.*\]/i.test(line))) {
-                    currentProject.link = line.trim();
-                }
-            }
-            
-            // Add the last project
-            if (currentProject) projectList.push(currentProject);
-            
-            return projectList;
-        }
-
-        // Process all project entries
-        let allProjects = [];
-        for (const proj of projects) {
-            const projText = typeof proj === 'string' ? proj : (proj.text || JSON.stringify(proj));
-            const parsed = parseATSProjects(projText);
-            allProjects = allProjects.concat(parsed);
-        }
-
-        // Render projects in numbered format with technologies
-        if (allProjects.length === 0) {
+        if (projects.length === 0) {
             document.getElementById("detectedProjects").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No projects detected in resume</p>";
         } else {
-            let html = '<div class="space-y-2">';
-            allProjects.forEach(proj => {
-                const techDisplay = proj.technologies ? ` (${proj.technologies})` : '';
-                const linkDisplay = proj.link ? ` ${proj.link}` : '';
-                html += `<p class="text-sm text-gray-900 dark:text-gray-100">${escapeHtml(proj.name)}${escapeHtml(techDisplay)}${escapeHtml(linkDisplay)}</p>`;
+            let html = '<div class="space-y-4">';
+            projects.forEach(proj => {
+                if (typeof proj === 'object') {
+                    html += `<div>`;
+                    let projectTitle = escapeHtml(proj.name || 'Unnamed Project');
+                    if (proj.technologies) {
+                        projectTitle += ` (${escapeHtml(proj.technologies)})`;
+                    }
+                    html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${projectTitle}</p>`;
+                    
+                    // Add achievements/description with bullet points
+                    if (proj.achievements && proj.achievements.length > 0) {
+                        html += '<div class="mt-2 text-sm text-gray-700 dark:text-gray-300">';
+                        proj.achievements.forEach(achievement => {
+                            html += `<p class="flex items-start mb-1"><span class="text-teal-500 mr-2 mt-0.5">□</span><span>${escapeHtml(achievement)}</span></p>`;
+                        });
+                        html += '</div>';
+                    } else if (proj.description) {
+                        html += `<p class="mt-2 text-sm text-gray-600 dark:text-gray-400"><span class="text-teal-500 mr-2">□</span>${escapeHtml(proj.description)}</p>`;
+                    }
+                    
+                    html += `</div>`;
+                }
             });
             html += '</div>';
             document.getElementById("detectedProjects").innerHTML = html;
         }
-        
-        console.debug('Parsed ATS Projects:', allProjects);
-        
-        // Certifications
+
+        // Certifications - Handle structured objects
         const certifications = data.parsed_sections.certifications || [];
         document.getElementById("detectedCertifications").innerHTML = certifications.length > 0
             ? certifications.map(cert => {
