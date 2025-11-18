@@ -268,7 +268,7 @@ except ImportError as e:
             }
             
         def _extract_experience(self, lines, resume_text):
-            """Extract work experience with proper formatting and structure"""
+            """Extract work experience with proper formatting and detailed bullet points"""
             experience = []
             resume_lower = resume_text.lower()
             
@@ -312,7 +312,8 @@ except ImportError as e:
                             'title': title,
                             'description': '',
                             'dates': '',
-                            'location': ''
+                            'location': '',
+                            'achievements': []
                         }
                     
                     # Look for date patterns
@@ -323,8 +324,14 @@ except ImportError as e:
                     elif current_exp and ('|' in line_clean or 'remote' in line_lower or any(word in line_lower for word in ['delhi', 'mumbai', 'bangalore', 'india'])):
                         current_exp['location'] = line_clean
                     
-                    # Add to description (bullet points or paragraphs)
-                    elif current_exp and (line_clean.startswith(('•', '-', '*')) or len(line_clean) > 30):
+                    # Look for bullet points and achievements
+                    elif current_exp and line_clean.startswith(('•', '-', '*')):
+                        achievement = line_clean.lstrip('•-* ').strip()
+                        if len(achievement) > 10:  # Only meaningful achievements
+                            current_exp['achievements'].append(achievement)
+                    
+                    # Add to description (paragraphs)
+                    elif current_exp and len(line_clean) > 30 and not line_clean.startswith(('•', '-', '*')):
                         if current_exp['description']:
                             current_exp['description'] += ' '
                         current_exp['description'] += line_clean
@@ -333,32 +340,76 @@ except ImportError as e:
             if current_exp:
                 experience.append(current_exp)
             
-            # Format for display - convert to readable strings
+            # Format for display with bullet points
             formatted_experience = []
             for exp in experience:
-                desc_parts = []
-                if exp.get('dates'):
-                    desc_parts.append(f"Duration: {exp['dates']}")
-                if exp.get('location'):
-                    desc_parts.append(f"Location: {exp['location']}")
-                if exp.get('description'):
-                    desc_parts.append(exp['description'][:500])
-                
+                # Main title line
                 formatted_exp = f"{exp['company']} — {exp['title']}"
-                if desc_parts:
-                    formatted_exp += f"\n{' | '.join(desc_parts)}"
+                
+                # Add a bullet point with key information
+                bullet_parts = []
+                if exp.get('dates'):
+                    bullet_parts.append(f"Duration: {exp['dates']}")
+                if exp.get('location'):
+                    bullet_parts.append(f"Location: {exp['location']}")
+                
+                # Use achievements if available, otherwise use description
+                if exp.get('achievements'):
+                    # Add first achievement as the main bullet point
+                    main_achievement = exp['achievements'][0][:200]
+                    if bullet_parts:
+                        formatted_exp += f"\n• {' | '.join(bullet_parts)} | {main_achievement}"
+                    else:
+                        formatted_exp += f"\n• {main_achievement}"
+                elif exp.get('description'):
+                    # Use description as bullet point
+                    desc_summary = exp['description'][:200]
+                    if bullet_parts:
+                        formatted_exp += f"\n• {' | '.join(bullet_parts)} | {desc_summary}"
+                    else:
+                        formatted_exp += f"\n• {desc_summary}"
+                else:
+                    # Default bullet point with just basic info
+                    if bullet_parts:
+                        formatted_exp += f"\n• {' | '.join(bullet_parts)}"
+                    else:
+                        formatted_exp += "\n• Professional experience in this role"
                     
                 formatted_experience.append(formatted_exp)
             
             return formatted_experience[:5]
             
         def _extract_education(self, lines, resume_text):
-            """Extract education with proper formatting"""
+            """Extract education with robust degree detection and proper formatting"""
             education = []
             resume_lower = resume_text.lower()
             
             current_edu = None
             in_education_section = False
+            
+            # Enhanced degree keywords for better detection
+            degree_patterns = [
+                r'bachelor\s+of\s+technology',
+                r'b\.?tech',
+                r'bachelor\s+of\s+science',
+                r'b\.?s\.?c?',
+                r'bachelor\s+of\s+arts',
+                r'b\.?a\.?',
+                r'bachelor\s+of\s+engineering',
+                r'b\.?e\.?',
+                r'master\s+of\s+technology',
+                r'm\.?tech',
+                r'master\s+of\s+science',
+                r'm\.?s\.?c?',
+                r'master\s+of\s+arts',
+                r'm\.?a\.?',
+                r'master\s+of\s+business\s+administration',
+                r'm\.?b\.?a\.?',
+                r'doctor\s+of\s+philosophy',
+                r'ph\.?d\.?',
+                r'diploma',
+                r'certificate'
+            ]
             
             for line in lines:
                 line_clean = line.strip()
@@ -378,53 +429,59 @@ except ImportError as e:
                     continue
                     
                 if in_education_section and line_clean:
-                    # Institution name (usually the first substantial line)
-                    if any(word in line_lower for word in ['university', 'institute', 'college', 'technology', 'engineering']):
+                    # Institution name
+                    if any(word in line_lower for word in ['university', 'institute', 'college', 'technology', 'engineering', 'academy', 'school']):
                         if current_edu:
                             education.append(current_edu)
                         current_edu = {
                             'institution': line_clean,
                             'degree': '',
                             'dates': '',
-                            'details': []
+                            'field': ''
                         }
                     
                     # Dates pattern
                     elif current_edu and re.search(r'\d{2}/\d{4}|\d{4}', line_clean):
                         current_edu['dates'] = line_clean
                     
-                    # Degree information
-                    elif current_edu and any(word in line_lower for word in ['bachelor', 'master', 'degree', 'technology', 'computer', 'science']):
+                    # Enhanced degree detection using patterns
+                    elif current_edu and any(re.search(pattern, line_lower) for pattern in degree_patterns):
                         if not current_edu['degree']:
                             current_edu['degree'] = line_clean
-                        else:
-                            current_edu['details'].append(line_clean)
                     
-                    # Additional details
-                    elif current_edu and len(line_clean) > 10:
-                        current_edu['details'].append(line_clean)
+                    # Field of study detection
+                    elif current_edu and any(word in line_lower for word in ['computer science', 'engineering', 'science', 'arts', 'commerce', 'management']):
+                        if not current_edu['field'] and 'degree' not in line_lower:
+                            current_edu['field'] = line_clean
             
             # Add final education
             if current_edu:
                 education.append(current_edu)
             
-            # Format for display
+            # Format for display with proper degree recognition
             formatted_education = []
             for edu in education:
                 edu_text = edu['institution']
-                if edu.get('degree'):
-                    edu_text += f"\n{edu['degree']}"
+                
+                # Add dates to institution if available
                 if edu.get('dates'):
                     edu_text += f" ({edu['dates']})"
-                if edu.get('details'):
-                    edu_text += f"\n{' | '.join(edu['details'][:2])}"
+                
+                # Add degree information
+                if edu.get('degree'):
+                    edu_text += f"\n{edu['degree']}"
+                elif edu.get('field'):
+                    edu_text += f"\nDegree in {edu['field']}"
+                else:
+                    # Don't show "Degree not specified" - leave it clean
+                    pass
                     
                 formatted_education.append(edu_text)
             
             return formatted_education[:3]
             
         def _extract_projects(self, lines, resume_text):
-            """Extract projects with proper formatting and structure"""
+            """Extract projects with detailed bullet points and achievements"""
             projects = []
             resume_lower = resume_text.lower()
             
@@ -464,15 +521,23 @@ except ImportError as e:
                             'name': title_part,
                             'technologies': tech_part,
                             'description': '',
-                            'achievements': []
+                            'achievements': [],
+                            'metrics': []
                         }
                     
                     # Project achievements/descriptions (bullet points)
-                    elif current_project and (line_clean.startswith(('•', '-', '*')) or 'achieved' in line_lower or 'built' in line_lower):
-                        current_project['achievements'].append(line_clean.lstrip('•-* '))
+                    elif current_project and line_clean.startswith(('•', '-', '*')):
+                        achievement = line_clean.lstrip('•-* ').strip()
+                        if len(achievement) > 15:  # Only meaningful achievements
+                            current_project['achievements'].append(achievement)
+                            
+                            # Extract metrics/numbers from achievements
+                            metrics = re.findall(r'\d+(?:\.\d+)?%|\d+(?:\.\d+)?\s*(?:k|million|billion)?', achievement.lower())
+                            if metrics:
+                                current_project['metrics'].extend(metrics[:2])  # Top 2 metrics
                     
-                    # Additional description
-                    elif current_project and len(line_clean) > 20:
+                    # Additional description (non-bullet points)
+                    elif current_project and len(line_clean) > 25 and not line_clean.startswith(('•', '-', '*')):
                         if current_project['description']:
                             current_project['description'] += ' '
                         current_project['description'] += line_clean
@@ -481,21 +546,31 @@ except ImportError as e:
             if current_project:
                 projects.append(current_project)
             
-            # Format for display
+            # Format for display with enhanced bullet points
             formatted_projects = []
             for proj in projects:
+                # Main title line
                 proj_text = proj['name']
                 if proj.get('technologies'):
                     proj_text += f" ({proj['technologies']})"
                 
-                details = []
-                if proj.get('achievements'):
-                    details.extend(proj['achievements'][:3])  # Top 3 achievements
-                elif proj.get('description'):
-                    details.append(proj['description'][:300])
+                # Create a comprehensive bullet point
+                bullet_content = []
                 
-                if details:
-                    proj_text += f"\n• {' • '.join(details)}"
+                if proj.get('achievements'):
+                    # Use the first, most impactful achievement
+                    main_achievement = proj['achievements'][0]
+                    bullet_content.append(main_achievement[:250])  # Limit length
+                elif proj.get('description'):
+                    # Use description as fallback
+                    bullet_content.append(proj['description'][:250])
+                else:
+                    # Default achievement bullet
+                    bullet_content.append(f"Developed using {proj.get('technologies', 'modern technologies')} with focus on performance and scalability")
+                
+                # Add the bullet point
+                if bullet_content:
+                    proj_text += f"\n• {bullet_content[0]}"
                     
                 formatted_projects.append(proj_text)
             
