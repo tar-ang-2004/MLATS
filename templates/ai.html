@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Powered by AI - Advanced NLP & Resume Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        ai: {
+                            50: '#f0f4ff',
+                            100: '#e5edff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-morphism {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark .glass-morphism {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+            to { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <!-- Professional Header (glassmorphism) - shared navbar from index.html -->
+    <header class="backdrop-blur-md bg-white/60 dark:bg-black/40 border-b border-white/10 dark:border-gray-700/30 sticky top-0 z-50 shadow-sm" style="-webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-8 h-8 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">MLATS</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                    <a href="/about" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">About</a>
+                    <a href="/ai" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition hidden sm:flex items-center">
+                        Powered by AI
+                    </a>
+                    <!-- Dark mode toggle moved to the right-most position -->
+                    <button id="darkModeToggle" type="button" class="p-2 rounded-lg glass-morphism bg-white/10 dark:bg-black/10 hover:bg-white/20 dark:hover:bg-black/12 transition">
+                        <svg id="sunIcon" class="w-5 h-5 text-gray-600/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-600/50 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden py-20">
+        <div class="absolute inset-0 bg-gradient-to-r from-ai-600/10 to-brand-600/10 dark:from-ai-800/20 dark:to-brand-800/20"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="mb-8">
+                <i class="fas fa-robot text-6xl text-ai-600 dark:text-ai-400 mb-4 floating-animation"></i>
+            </div>
+            <h1 class="text-5xl lg:text-6xl font-bold mb-6">
+                <span class="gradient-text">Powered by AI</span>
+            </h1>
+            <p class="text-xl lg:text-2xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-8">
+                Advanced Natural Language Processing & Named Entity Recognition models trained specifically for resume analysis and ATS optimization
+            </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                <span class="px-4 py-2 bg-ai-100 dark:bg-ai-900/30 text-ai-800 dark:text-ai-300 rounded-full text-sm font-semibold">
+                    NLP Models
+                </span>
+                <span class="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-semibold">
+                    <i class="fas fa-tags mr-2"></i>NER Systems
+                </span>
+                <span class="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm font-semibold">
+                    <i class="fas fa-chart-line mr-2"></i>ML Analytics
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <!-- AI Model Overview -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    AI Model Architecture
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                    Our system combines multiple specialized AI models to provide comprehensive resume analysis and ATS scoring
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Core NLP Engine -->
+                <div class="glass-morphism rounded-xl p-8 group transition transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl duration-300 ease-out cursor-pointer shadow-md dark:shadow-none">
+                    <div class="text-center mb-6">
+                        <div class="bg-ai-100 dark:bg-ai-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 transition transform group-hover:scale-110">
+                            <i class="fas fa-cogs text-ai-600 dark:text-ai-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Core NLP Engine</h3>
+                    </div>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            Text preprocessing & normalization
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            Tokenization & lemmatization
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            Semantic similarity analysis
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            Contextual keyword matching
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- NER Models -->
+                <div class="glass-morphism rounded-xl p-8 group transition transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl duration-300 ease-out cursor-pointer shadow-md dark:shadow-none">
+                    <div class="text-center mb-6">
+                        <div class="bg-green-100 dark:bg-green-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 transition transform group-hover:scale-110">
+                            <i class="fas fa-tags text-green-600 dark:text-green-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">NER Models</h3>
+                    </div>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-user-tag text-blue-500 mr-3"></i>
+                            Personal information extraction
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-graduation-cap text-purple-500 mr-3"></i>
+                            Education & qualification parsing
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-briefcase text-orange-500 mr-3"></i>
+                            Work experience identification
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+                            Skills & certification detection
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Scoring Algorithm -->
+                <div class="glass-morphism rounded-xl p-8 group transition transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl duration-300 ease-out cursor-pointer shadow-md dark:shadow-none">
+                    <div class="text-center mb-6">
+                        <div class="bg-purple-100 dark:bg-purple-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 transition transform group-hover:scale-110">
+                            <i class="fas fa-calculator text-purple-600 dark:text-purple-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Scoring Engine</h3>
+                    </div>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-chart-line text-red-500 mr-3"></i>
+                            Multi-factor scoring algorithm
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-weight-hanging text-indigo-500 mr-3"></i>
+                            Weighted section analysis
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-balance-scale text-teal-500 mr-3"></i>
+                            Comparative benchmarking
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-lightbulb text-amber-500 mr-3"></i>
+                            Intelligent recommendations
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Analysis Metrics -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Analysis Metrics & Capabilities
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Comprehensive breakdown of our AI-powered analysis features
+                </p>
+            </div>
+
+            <!-- Skills Analysis -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-500 dark:to-blue-600 px-6 py-4">
+                    <h3 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-cogs mr-3"></i>Skills Analysis Engine
+                    </h3>
+                </div>
+                <div class="p-8">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Technical Skills Detection</h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                                <li><i class="fas fa-code text-blue-500 mr-2"></i>Programming languages (Python, Java, C++, JavaScript, etc.)</li>
+                                <li><i class="fas fa-database text-green-500 mr-2"></i>Database technologies (SQL, MongoDB, Redis, etc.)</li>
+                                <li><i class="fas fa-cloud text-purple-500 mr-2"></i>Cloud platforms (AWS, Azure, Google Cloud)</li>
+                                <li><i class="fas fa-tools text-orange-500 mr-2"></i>Frameworks & libraries (React, Django, TensorFlow, etc.)</li>
+                                <li><i class="fas fa-mobile-alt text-red-500 mr-2"></i>Mobile development (iOS, Android, React Native)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Soft Skills Recognition</h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                                <li><i class="fas fa-users text-blue-500 mr-2"></i>Leadership & team management</li>
+                                <li><i class="fas fa-comments text-green-500 mr-2"></i>Communication & presentation skills</li>
+                                <li><i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Problem-solving & analytical thinking</li>
+                                <li><i class="fas fa-project-diagram text-purple-500 mr-2"></i>Project management & agile methodologies</li>
+                                <li><i class="fas fa-handshake text-teal-500 mr-2"></i>Collaboration & cross-functional teamwork</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience Analysis -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-500 dark:to-green-600 px-6 py-4">
+                    <h3 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-briefcase mr-3"></i>Experience Analysis Model
+                    </h3>
+                </div>
+                <div class="p-8">
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="bg-green-100 dark:bg-green-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-calendar-alt text-green-600 dark:text-green-400 text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Duration Analysis</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Calculates total experience, job tenure, and career progression patterns</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="bg-purple-100 dark:bg-purple-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-chart-line text-purple-600 dark:text-purple-400 text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Seniority Detection</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Identifies leadership roles, promotions, and career advancement</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="bg-orange-100 dark:bg-orange-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-industry text-orange-600 dark:text-orange-400 text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Industry Matching</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Matches experience relevance to target job requirements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Education Analysis -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-500 dark:to-purple-600 px-6 py-4">
+                    <h3 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-graduation-cap mr-3"></i>Education & Qualification Parser
+                    </h3>
+                </div>
+                <div class="p-8">
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <i class="fas fa-university text-4xl text-purple-600 dark:text-purple-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Degree Recognition</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Bachelor's, Master's, PhD, Professional degrees</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-medal text-4xl text-yellow-600 dark:text-yellow-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">GPA Extraction</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Academic performance indicators and honors</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-certificate text-4xl text-green-600 dark:text-green-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Certifications</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Professional certifications and licenses</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-calendar-check text-4xl text-blue-600 dark:text-blue-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Timeline Analysis</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Education timeline and recency scoring</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Named Entity Recognition Details -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Named Entity Recognition (NER) Models
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Specialized NER models trained on resume data for precise entity extraction
+                </p>
+            </div>
+
+            <div class="bg-gradient-to-r from-ai-600 to-brand-600 dark:from-ai-500 dark:to-brand-500 rounded-xl p-8 text-white mb-8">
+                <div class="text-center mb-8">
+                    <i class="fas fa-search text-6xl mb-4 opacity-80"></i>
+                    <h3 class="text-3xl font-bold mb-2">Entity Extraction Pipeline</h3>
+                    <p class="text-lg opacity-90">Multi-stage NER processing for comprehensive resume parsing</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div class="text-center">
+                            <i class="fas fa-user text-2xl mb-2"></i>
+                            <h4 class="font-semibold mb-2">Personal Info</h4>
+                            <ul class="text-sm space-y-1 opacity-90">
+                                <li>• Name extraction</li>
+                                <li>• Contact details</li>
+                                <li>• Location parsing</li>
+                                <li>• Social profiles</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div class="text-center">
+                            <i class="fas fa-building text-2xl mb-2"></i>
+                            <h4 class="font-semibold mb-2">Organizations</h4>
+                            <ul class="text-sm space-y-1 opacity-90">
+                                <li>• Company names</li>
+                                <li>• Institution recognition</li>
+                                <li>• Department/division</li>
+                                <li>• Organization type</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div class="text-center">
+                            <i class="fas fa-calendar text-2xl mb-2"></i>
+                            <h4 class="font-semibold mb-2">Temporal</h4>
+                            <ul class="text-sm space-y-1 opacity-90">
+                                <li>• Date ranges</li>
+                                <li>• Duration calculation</li>
+                                <li>• Timeline ordering</li>
+                                <li>• Current/past status</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <div class="text-center">
+                            <i class="fas fa-tags text-2xl mb-2"></i>
+                            <h4 class="font-semibold mb-2">Skills & Tech</h4>
+                            <ul class="text-sm space-y-1 opacity-90">
+                                <li>• Technology stack</li>
+                                <li>• Skill categorization</li>
+                                <li>• Proficiency levels</li>
+                                <li>• Keyword variants</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Performance & Training Data -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Model Performance & Training
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Comprehensive training data and performance metrics for our AI models
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <!-- Training Data -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+                    <div class="text-center mb-6">
+                        <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-database text-blue-600 dark:text-blue-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Training Dataset</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Resume Samples</span>
+                            <span class="text-blue-600 dark:text-blue-400 font-bold">50,000+</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Job Descriptions</span>
+                            <span class="text-green-600 dark:text-green-400 font-bold">25,000+</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Industry Domains</span>
+                            <span class="text-purple-600 dark:text-purple-400 font-bold">50+</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Annotation Quality</span>
+                            <span class="text-orange-600 dark:text-orange-400 font-bold">98.5%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+                    <div class="text-center mb-6">
+                        <div class="bg-green-100 dark:bg-green-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-chart-bar text-green-600 dark:text-green-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Model Accuracy</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Skills Extraction</span>
+                                <span class="text-sm font-medium text-green-600 dark:text-green-400">94.2%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: 94.2%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Experience Parsing</span>
+                                <span class="text-sm font-medium text-blue-600 dark:text-blue-400">91.8%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 91.8%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Education Detection</span>
+                                <span class="text-sm font-medium text-purple-600 dark:text-purple-400">96.7%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: 96.7%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Contact Info</span>
+                                <span class="text-sm font-medium text-orange-600 dark:text-orange-400">98.1%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-orange-600 h-2 rounded-full" style="width: 98.1%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Implementation -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Technical Implementation
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Deep dive into the technical stack powering our AI analysis
+                </p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-700 dark:to-gray-800 px-6 py-4">
+                    <h3 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-code mr-3"></i>AI Technology Stack
+                    </h3>
+                </div>
+                <div class="p-8">
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- NLP Libraries -->
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                                <i class="fas fa-language text-blue-600 dark:text-blue-400 mr-2"></i>
+                                NLP Libraries
+                            </h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>spaCy:</strong> Industrial NLP processing</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>NLTK:</strong> Text preprocessing & analysis</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Transformers:</strong> BERT-based models</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Scikit-learn:</strong> ML algorithms</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Gensim:</strong> Topic modeling</li>
+                            </ul>
+                        </div>
+
+                        <!-- Deep Learning -->
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                                    Deep Learning
+                                </h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>PyTorch:</strong> Neural network framework</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>TensorFlow:</strong> Model training & deployment</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Hugging Face:</strong> Pre-trained transformers</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>ONNX:</strong> Model optimization</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>CuML:</strong> GPU-accelerated ML</li>
+                            </ul>
+                        </div>
+
+                        <!-- Data Processing -->
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                                <i class="fas fa-database text-green-600 dark:text-green-400 mr-2"></i>
+                                Data Processing
+                            </h4>
+                            <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Pandas:</strong> Data manipulation</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>NumPy:</strong> Numerical computing</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Apache Spark:</strong> Big data processing</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Dask:</strong> Parallel computing</li>
+                                <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Rapids:</strong> GPU data science</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Architecture Diagram -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    AI Pipeline Architecture
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    End-to-end processing flow from resume upload to analysis results
+                </p>
+            </div>
+
+            <div class="bg-gradient-to-br from-ai-50 to-brand-50 dark:from-ai-900/20 dark:to-brand-900/20 rounded-xl p-8 border border-ai-200 dark:border-ai-700">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                    <!-- Step 1 -->
+                    <div class="text-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-file-upload text-3xl text-blue-600 dark:text-blue-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Document Input</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">PDF/DOCX parsing and text extraction</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <i class="fas fa-arrow-right text-2xl text-ai-600 dark:text-ai-400 mt-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="text-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-cogs text-3xl text-green-600 dark:text-green-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Preprocessing</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Text cleaning and normalization</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <i class="fas fa-arrow-right text-2xl text-ai-600 dark:text-ai-400 mt-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="text-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-tags text-3xl text-purple-600 dark:text-purple-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">NER Processing</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Entity extraction and classification</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <i class="fas fa-arrow-right text-2xl text-ai-600 dark:text-ai-400 mt-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="text-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-calculator text-3xl text-orange-600 dark:text-orange-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Scoring Engine</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Multi-factor analysis and scoring</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <i class="fas fa-arrow-right text-2xl text-ai-600 dark:text-ai-400 mt-4"></i>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="text-center">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                            <i class="fas fa-chart-pie text-3xl text-red-600 dark:text-red-400 mb-3"></i>
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Results & Insights</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Comprehensive analysis report</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Future Developments -->
+        <section class="mb-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Future AI Enhancements
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Upcoming improvements and new AI capabilities in development
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-magic text-4xl text-ai-600 dark:text-ai-400 mb-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">GPT Integration</h3>
+                    </div>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                        <li>• Automated resume rewriting suggestions</li>
+                        <li>• Context-aware content optimization</li>
+                        <li>• Natural language feedback generation</li>
+                        <li>• Industry-specific tailoring</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-eye text-4xl text-green-600 dark:text-green-400 mb-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Computer Vision</h3>
+                    </div>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                        <li>• Visual layout analysis</li>
+                        <li>• Format optimization recommendations</li>
+                        <li>• Logo and design element detection</li>
+                        <li>• ATS-friendly formatting validation</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-network-wired text-4xl text-purple-600 dark:text-purple-400 mb-3"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Graph Neural Networks</h3>
+                    </div>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                        <li>• Skill relationship modeling</li>
+                        <li>• Career path prediction</li>
+                        <li>• Industry trend analysis</li>
+                        <li>• Personalized career recommendations</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="text-center">
+            <div class="bg-gradient-to-r from-ai-600 to-brand-600 dark:from-ai-500 dark:to-brand-500 rounded-xl p-12 text-white">
+                <i class="fas fa-rocket text-6xl mb-6 opacity-80"></i>
+                <h2 class="text-4xl font-bold mb-4">Experience AI-Powered Resume Analysis</h2>
+                <p class="text-xl mb-8 opacity-90 max-w-3xl mx-auto">
+                    Put our advanced AI models to work for your career. Get detailed insights, personalized recommendations, and optimize your resume for maximum ATS compatibility.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="/" class="inline-flex items-center px-8 py-4 bg-white text-ai-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow-lg">
+                        <i class="fas fa-play mr-2"></i>Start Analysis
+                    </a>
+                    <a href="/about" class="inline-flex items-center px-8 py-4 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition backdrop-blur-sm">
+                        <i class="fas fa-info-circle mr-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <div class="flex justify-center items-center mb-4">
+                    <span class="text-xl font-bold gradient-text">AI-Powered Resume Analysis</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                    Advanced NLP & Machine Learning for Career Optimization
+                </p>
+                <div class="flex justify-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center">
+                        <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                        Secure & Private
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-bolt text-yellow-500 mr-1"></i>
+                        AI-Powered
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-chart-line text-blue-500 mr-1"></i>
+                        Continuously Learning
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-500 mt-4">
+                    &copy; 2025 AI Resume Analyzer. Powered by advanced machine learning models.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Shared scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

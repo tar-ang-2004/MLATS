@@ -1,0 +1,31 @@
+[Unit]
+Description=ATS Resume Checker Gunicorn Application
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=ats-resume-checker
+WorkingDirectory=/opt/ats-resume-checker
+Environment=PATH=/opt/ats-resume-checker/venv/bin
+Environment=FLASK_ENV=production
+ExecStart=/opt/ats-resume-checker/venv/bin/gunicorn --config gunicorn.conf.py wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ats-resume-checker/logs
+ReadWritePaths=/opt/ats-resume-checker/uploads
+ReadWritePaths=/opt/ats-resume-checker/exports
+ReadWritePaths=/opt/ats-resume-checker/instance
+
+[Install]
+WantedBy=multi-user.target

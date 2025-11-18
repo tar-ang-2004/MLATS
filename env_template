@@ -1,0 +1,27 @@
+# Development environment variables
+FLASK_ENV=development
+SECRET_KEY=dev-secret-key-change-for-production
+DATABASE_URL=sqlite:///instance/ats_resume_checker.db
+
+# Production PostgreSQL settings (uncomment and configure for production)
+# DATABASE_URL=postgresql://username:password@localhost:5432/ats_resume_db
+# POSTGRES_DB=ats_resume_db
+# POSTGRES_USER=ats_user  
+# POSTGRES_PASSWORD=secure_password_123
+
+# Redis settings for rate limiting (optional)
+# REDIS_URL=redis://localhost:6379/0
+
+# File upload settings
+MAX_CONTENT_LENGTH=16777216
+UPLOAD_FOLDER=uploads
+ALLOWED_EXTENSIONS=pdf,doc,docx
+
+# Security settings
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_HTTPONLY=True
+SESSION_COOKIE_SAMESITE=Lax
+
+# Logging settings
+LOG_LEVEL=INFO
+LOG_FORMAT=detailed

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Checker - Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#b9ddfe',
+                            300: '#7cc4fd',
+                            400: '#36a9fa',
+                            500: '#0c8ce9',
+                            600: '#006fc7',
+                            700: '#0159a2',
+                            800: '#064c86',
+                            900: '#0b406f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">ATS Resume Analytics</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400">
+                        Back to Analyzer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600 dark:text-gray-400">Loading analytics...</p>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard" class="hidden space-y-8">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Resumes</p>
+                            <p id="totalResumes" class="text-2xl font-bold text-gray-900 dark:text-gray-100">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Average Score</p>
+                            <p id="avgScore" class="text-2xl font-bold text-gray-900 dark:text-gray-100">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Recent (30d)</p>
+                            <p id="recentCount" class="text-2xl font-bold text-gray-900 dark:text-gray-100">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Score Range</p>
+                            <p id="scoreRange" class="text-2xl font-bold text-gray-900 dark:text-gray-100">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Classification Distribution -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Resume Classification</h3>
+                    <div class="h-72">
+                        <canvas id="classificationChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Daily Activity -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Daily Activity (30 days)</h3>
+                    <div class="h-72">
+                        <canvas id="activityChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification Trends (stocks-like) -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Classification Trends (30 days)</h3>
+                <div class="h-72">
+                    <canvas id="classificationTrendChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <!-- Skills Analysis -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Top Skills -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Most Matched Skills</h3>
+                    <div id="topSkills" class="space-y-3">
+                        <!-- Skills will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Missing Skills -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Most Missing Skills</h3>
+                    <div id="missingSkills" class="space-y-3">
+                        <!-- Missing skills will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Resumes -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Resume Analyses</h3>
+                <div id="recentResumes" class="overflow-x-auto">
+                    <!-- Recent resumes table will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Load analytics data
+        async function loadAnalytics() {
+            try {
+                const [overviewResponse, trendsResponse, resumesResponse] = await Promise.all([
+                    fetch('/api/analytics/overview'),
+                    fetch('/api/analytics/trends'),
+                    fetch('/api/resumes?per_page=10')
+                ]);
+
+                const overview = await overviewResponse.json();
+                const trends = await trendsResponse.json();
+                const resumes = await resumesResponse.json();
+
+                // Update summary cards
+                document.getElementById('totalResumes').textContent = overview.summary?.total_resumes || 0;
+                document.getElementById('avgScore').textContent = overview.summary?.avg_score || 'N/A';
+                document.getElementById('recentCount').textContent = overview.summary?.recent_resumes_30d || 0;
+                
+                const scoreRange = overview.summary?.score_range;
+                if (scoreRange) {
+                    document.getElementById('scoreRange').textContent = `${scoreRange.min}-${scoreRange.max}`;
+                }
+
+                // Create classification chart
+                if (overview.classifications && overview.classifications.length > 0) {
+                    createClassificationChart(overview.classifications);
+                }
+
+                // Create activity chart
+                if (trends.daily_activity && trends.daily_activity.length > 0) {
+                    createActivityChart(trends.daily_activity);
+                }
+
+                // Create classification trends (stocks-like) if data available
+                let classificationTrendData = null;
+                if (trends.classification_trends && trends.classification_trends.length > 0) {
+                    classificationTrendData = trends.classification_trends;
+                } else if (trends.daily_activity && trends.daily_activity.length > 0) {
+                    // Some backends may include classification counts per day inside daily_activity
+                    const sample = trends.daily_activity[0] || {};
+                    if ('good_fit' in sample || 'potential_fit' in sample || 'no_fit' in sample || 'good' in sample || 'potential' in sample || 'no' in sample) {
+                        classificationTrendData = trends.daily_activity.map(d => ({
+                            date: d.date,
+                            good_fit: d.good_fit ?? d.good ?? d.good_count ?? 0,
+                            potential_fit: d.potential_fit ?? d.potential ?? d.potential_count ?? 0,
+                            no_fit: d.no_fit ?? d.no ?? d.no_count ?? 0
+                        }));
+                    }
+                }
+
+                if (classificationTrendData && classificationTrendData.length > 0) {
+                    createClassificationTrendChart(classificationTrendData);
+                }
+
+                // Display top skills
+                displaySkills(overview.top_skills || [], 'topSkills');
+                displaySkills(overview.top_missing_skills || [], 'missingSkills');
+
+                // Display recent resumes
+                displayRecentResumes(resumes.resumes || []);
+
+                // Show dashboard
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                
+                // Check if it's a JSON parsing error
+                let errorMessage = error.message;
+                if (errorMessage.includes('JSON') || errorMessage.includes('Unexpected token')) {
+                    errorMessage = 'Invalid response from server. Please check the API endpoints.';
+                }
+                
+                document.getElementById('loading').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-600">Error loading analytics: ${errorMessage}</p>
+                        <p class="text-gray-500 mt-2">Make sure the database is initialized and contains data.</p>
+                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Keep chart instances so we can destroy and recreate on data refresh
+        let classificationChartInstance = null;
+        function createClassificationChart(classifications) {
+            const canvas = document.getElementById('classificationChart');
+            const ctx = canvas.getContext('2d');
+            
+            const colors = {
+                'Good Fit': '#10b981',
+                'Potential Fit': '#f59e0b',
+                'No Fit': '#ef4444'
+            };
+
+            // Destroy previous instance if present
+            if (classificationChartInstance) {
+                classificationChartInstance.destroy();
+                classificationChartInstance = null;
+            }
+
+            classificationChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: classifications.map(c => c.classification),
+                    datasets: [{
+                        data: classifications.map(c => c.count),
+                        backgroundColor: classifications.map(c => colors[c.classification] || '#6b7280'),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        let activityChartInstance = null;
+        function createActivityChart(dailyActivity) {
+            const canvas = document.getElementById('activityChart');
+            const ctx = canvas.getContext('2d');
+
+            if (activityChartInstance) {
+                activityChartInstance.destroy();
+                activityChartInstance = null;
+            }
+
+            activityChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyActivity.map(d => new Date(d.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Resumes Analyzed',
+                        data: dailyActivity.map(d => d.resume_count),
+                        borderColor: '#0c8ce9',
+                        backgroundColor: 'rgba(12, 140, 233, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Stocks-like classification trend chart (3 lines: Good Fit, Potential Fit, No Fit)
+        let classificationTrendChartInstance = null;
+        function createClassificationTrendChart(trendData) {
+            const canvas = document.getElementById('classificationTrendChart');
+            const ctx = canvas.getContext('2d');
+
+            // Expect trendData as array of {date: 'YYYY-MM-DD', good_fit: n, potential_fit: n, no_fit: n}
+            const labels = trendData.map(d => new Date(d.date).toLocaleDateString());
+            const goodData = trendData.map(d => d.good_fit || 0);
+            const potentialData = trendData.map(d => d.potential_fit || 0);
+            const noFitData = trendData.map(d => d.no_fit || 0);
+
+            if (classificationTrendChartInstance) {
+                classificationTrendChartInstance.destroy();
+                classificationTrendChartInstance = null;
+            }
+
+            classificationTrendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Good Fit',
+                            data: goodData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16,185,129,0.08)',
+                            tension: 0.2,
+                            pointRadius: 2,
+                            fill: true
+                        },
+                        {
+                            label: 'Potential Fit',
+                            data: potentialData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245,158,11,0.06)',
+                            tension: 0.2,
+                            pointRadius: 2,
+                            fill: true
+                        },
+                        {
+                            label: 'No Fit',
+                            data: noFitData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239,68,68,0.06)',
+                            tension: 0.2,
+                            pointRadius: 2,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    stacked: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        function displaySkills(skills, containerId) {
+            const container = document.getElementById(containerId);
+            
+            if (skills.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No data available</p>';
+                return;
+            }
+
+            container.innerHTML = skills.map(skill => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <span class="font-medium text-gray-900 dark:text-gray-100">${skill.skill}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">${skill.count} times</span>
+                </div>
+            `).join('');
+        }
+
+        function displayRecentResumes(resumes) {
+            const container = document.getElementById('recentResumes');
+            
+            if (resumes.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">No resumes analyzed yet</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Filename</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Classification</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Verdict</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        ${resumes.map(resume => {
+                            const badgeColor = resume.classification === 'Good Fit' ? 'bg-green-100 text-green-800' :
+                                             resume.classification === 'Potential Fit' ? 'bg-yellow-100 text-yellow-800' :
+                                             'bg-red-100 text-red-800';
+                            
+                            return `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        ${resume.filename}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        ${resume.overall_score}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}">
+                                            ${resume.classification}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        <div class="max-w-xs truncate" title="${resume.verdict || 'No verdict available'}">
+                                            ${resume.verdict || 'No verdict available'}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        ${new Date(resume.upload_timestamp).toLocaleDateString()}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Load analytics on page load
+        loadAnalytics();
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+MIT License
+
+Copyright (c) 2024 ATS Resume Checker
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+Third-Party Licenses and Attributions:
+
+This project uses the following open-source libraries and their respective licenses:
+
+1. Flask - BSD 3-Clause License
+   Copyright (c) 2010 by the Pallets team
+   
+2. Sentence Transformers - Apache License 2.0
+   Copyright (c) 2019 Ubiquitous Knowledge Processing (UKP) Lab, Technische Universität Darmstadt
+   
+3. spaCy - MIT License
+   Copyright (C) 2016-2021 ExplosionAI UG (haftungsbeschränkt)
+   
+4. scikit-learn - BSD 3-Clause License
+   Copyright (c) 2007-2023 The scikit-learn developers
+   
+5. SQLAlchemy - MIT License
+   Copyright (c) 2006-2023 the SQLAlchemy authors and contributors
+   
+6. Redis - BSD 3-Clause License
+   Copyright (c) 2009-2012, Salvatore Sanfilippo
+   
+7. Celery - BSD 3-Clause License
+   Copyright (c) 2016-2023 Ask Solem & contributors
+   
+8. Prometheus Client - Apache License 2.0
+   Copyright 2015 The Prometheus Authors
+   
+9. PyPDF2 - BSD 3-Clause License
+   Copyright (c) 2006-2008, Mathieu Fenniak
+   
+10. python-docx - MIT License
+    Copyright (c) 2013 Steve Canny
+    
+11. Werkzeug - BSD 3-Clause License
+    Copyright 2007 Pallets
+
+For detailed license information of each dependency, please refer to their 
+respective repositories and license files.
+
+================================================================================
+
+Data and Model Attributions:
+
+This software may download and use pre-trained machine learning models from:
+
+1. Sentence Transformers Models (Hugging Face)
+   - Models are subject to their respective licenses
+   - Some models may have usage restrictions
+   - Please review model cards for specific licensing information
+
+2. spaCy Language Models
+   - Licensed under CC BY-SA 4.0 or similar
+   - See spaCy documentation for specific model licenses
+
+Users are responsible for ensuring compliance with all applicable licenses
+when using this software and its dependencies.
+
+================================================================================
+
+Usage Notice:
+
+This software is designed for resume analysis and should be used in compliance
+with applicable employment laws and regulations. Users are responsible for:
+
+1. Ensuring fair and non-discriminatory use
+2. Protecting candidate privacy and personal data
+3. Compliance with GDPR, CCPA, and other privacy regulations
+4. Proper handling and storage of resume data
+5. Obtaining necessary consents for data processing
+
+The authors and contributors of this software are not liable for any misuse
+or legal non-compliance in the deployment or operation of this system.
+
+================================================================================
+
+Security Notice:
+
+This software includes security features but users are responsible for:
+
+1. Regularly updating dependencies
+2. Properly configuring security settings
+3. Monitoring for security vulnerabilities
+4. Implementing appropriate access controls
+5. Following security best practices in deployment
+
+Report security vulnerabilities responsibly through the project's security
+policy outlined in SECURITY.md.
+
+================================================================================
+
+Contact Information:
+
+For questions about licensing or usage:
+- GitHub: https://github.com/yourusername/ats-resume-checker
+- Issues: https://github.com/yourusername/ats-resume-checker/issues
+
+For commercial licensing inquiries or support:
+- Email: support@your-domain.com
+- Website: https://your-domain.com

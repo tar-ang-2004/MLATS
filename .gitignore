@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+*.egg-info/
+*.egg
+*.dist-info/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+*.cover
+*.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local env / secrets
+.env
+.env.*
+.env.backup
+secrets.cfg
+credentials.json
+
+# Uploads and generated files
+uploads/
+exports/
+exports/*.csv
+MLATS Images/
+
+# Large dataset directory (exclude raw data)
+Dataset/
+
+# Notebook outputs
+output/
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# compiled C extensions
+*.so

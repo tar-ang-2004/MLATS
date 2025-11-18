@@ -1,0 +1,11 @@
+sample,actual,predicted,score,correct
+row_0,No Fit,No Fit,47.34,True
+row_1,No Fit,No Fit,39.92,True
+row_10,No Fit,No Fit,46.73,True
+row_100,No Fit,No Fit,44.08,True
+row_1000,Potential Fit,No Fit,48.4,False
+row_1001,Potential Fit,No Fit,48.36,False
+row_1002,Potential Fit,No Fit,41.05,False
+row_1003,Potential Fit,No Fit,39.17,False
+row_1004,Potential Fit,No Fit,43.68,False
+row_1005,Potential Fit,No Fit,41.62,False

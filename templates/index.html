@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Checker - Professional Resume Analysis Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#b9ddfe',
+                            300: '#7cc4fd',
+                            400: '#36a9fa',
+                            500: '#0c8ce9',
+                            600: '#006fc7',
+                            700: '#0159a2',
+                            800: '#064c86',
+                            900: '#0b406f',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <!-- Starlight animated background -->
+    <div id="starlight" class="starlight"></div>
+    <!-- Professional Header (glassmorphism) -->
+    <header class="backdrop-blur-md bg-white/60 dark:bg-black/40 border-b border-white/10 dark:border-gray-700/30 sticky top-0 z-50 shadow-sm" style="-webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-8 h-8 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">MLATS</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                    <a href="/about" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">About</a>
+                    <a href="/ai" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition hidden sm:flex items-center">
+                        Powered by AI
+                    </a>
+                    <!-- Dark mode toggle moved to the right-most position -->
+                    <button id="darkModeToggle" type="button" class="p-2 rounded-lg glass-morphism bg-white/10 dark:bg-black/10 hover:bg-white/20 dark:hover:bg-black/12 transition">
+                        <svg id="sunIcon" class="w-5 h-5 text-gray-600/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-600/50 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <!-- Hero Section - Clean & Professional -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                Optimize Your Resume for ATS
+            </h1>
+            <p class="text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Get instant feedback on your resume's compatibility with Applicant Tracking Systems. 
+                Identify missing keywords and improve your chances of landing interviews.
+            </p>
+        </div>
+
+
+        <!-- Upload Form - Professional Design -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-8">
+            <form id="uploadForm" enctype="multipart/form-data" class="space-y-6">
+                <!-- Job Description -->
+                <div>
+                    <label for="jobDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Job Description
+                    </label>
+                    <textarea 
+                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500 focus:border-transparent transition resize-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                        id="jobDescription" 
+                        name="job_description" 
+                        rows="8" 
+                        placeholder="Paste the job description here..."
+                        required></textarea>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Include the complete job posting for accurate analysis
+                    </p>
+                </div>
+
+                <!-- Resume Upload -->
+                <div>
+                    <label for="resumeFile" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Resume Upload
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:border-brand-400 dark:hover:border-brand-500 transition cursor-pointer bg-gray-50 dark:bg-gray-700/50" id="dropZone">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                <label for="resumeFile" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-brand-600 dark:text-brand-400 hover:text-brand-500 dark:hover:text-brand-300 focus-within:outline-none px-2 py-1">
+                                    <span>Upload a file</span>
+                                    <input id="resumeFile" name="resume" type="file" class="sr-only" accept=".pdf,.docx" required>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400" id="fileStatus">PDF or DOCX up to 16MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    id="analyzeBtn"
+                    class="w-full bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white font-semibold py-3 px-6 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 dark:focus:ring-offset-gray-800">
+                    Analyze Resume
+                </button>
+            </form>
+        </div>
+
+
+        <!-- Loading State -->
+        <div id="loadingSpinner" class="hidden text-center py-12">
+            <div class="inline-block">
+                <div class="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 border-t-brand-600 dark:border-t-brand-400 rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-700 dark:text-gray-300 font-medium">Analyzing your resume...</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">This may take a few moments</p>
+            </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorAlert" class="hidden mb-8">
+            <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 p-4 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm text-red-700 dark:text-red-300 font-medium" id="errorMessage"></p>
+                    </div>
+                    <button onclick="document.getElementById('errorAlert').classList.add('hidden')" class="ml-auto text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section - Clean Professional Design -->
+        <div id="resultsSection" class="hidden space-y-8">
+            <!-- Overall Score -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="bg-gradient-to-r from-brand-600 to-brand-700 dark:from-brand-500 dark:to-brand-600 px-6 py-4">
+                    <h2 class="text-2xl font-bold text-white">Analysis Results</h2>
+                </div>
+                <div class="p-8">
+                    <div class="flex flex-col md:flex-row items-center justify-between">
+                        <div class="mb-6 md:mb-0">
+                            <div class="relative inline-flex">
+                                <svg class="transform -rotate-90" width="180" height="180">
+                                    <circle cx="90" cy="90" r="70" fill="none" stroke="#e5e7eb" class="dark:stroke-gray-700" stroke-width="12"></circle>
+                                    <circle id="scoreCircle" cx="90" cy="90" r="70" fill="none" stroke="#10b981" stroke-width="12" 
+                                            stroke-dasharray="440" stroke-dashoffset="440" 
+                                            stroke-linecap="round"
+                                            style="transition: stroke-dashoffset 2s ease-out;"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span id="scoreText" class="text-5xl font-bold text-gray-900 dark:text-gray-100">0</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">out of 100</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 md:ml-8">
+                            <div id="classificationBadge" class="mb-4"></div>
+                            <p class="text-gray-700 dark:text-gray-300 mb-2">
+                                <span class="font-medium">File:</span> 
+                                <span id="fileName" class="text-gray-900 dark:text-gray-100 font-semibold"></span>
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Your resume has been analyzed against the job requirements. Review the detailed breakdown below.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Scores -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Detailed Breakdown</h3>
+                <div id="sectionScores" class="space-y-4"></div>
+            </div>
+
+            <!-- Skills Analysis -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Matched Skills -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-green-50 dark:bg-green-900/20 border-b border-green-100 dark:border-green-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-green-900 dark:text-green-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Matched Skills (<span id="matchedCount">0</span>)
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="matchedSkills" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Missing Skills -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-amber-900 dark:text-amber-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            Missing Skills (<span id="missingCount">0</span>)
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="missingSkills" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Contact Information</h3>
+                <div id="contactInfo" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </div>
+
+            <!-- Resume Content Sections -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Detected Skills (hidden) -->
+                <!-- Hidden by user request: section removed from visible results but kept in DOM for compatibility with scripts -->
+                <div class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-blue-900 dark:text-blue-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                            </svg>
+                            All Detected Skills
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="detectedSkills" class="text-gray-600 dark:text-gray-400 text-sm">
+                            <p class="italic">Analyzing resume...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Experience -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-purple-900 dark:text-purple-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                            </svg>
+                            Experience
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="detectedExperience" class="text-gray-600 dark:text-gray-400 text-sm">
+                            <p class="italic">Analyzing resume...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Education -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-indigo-900 dark:text-indigo-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                            </svg>
+                            Education
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="detectedEducation" class="text-gray-600 dark:text-gray-400 text-sm">
+                            <p class="italic">Analyzing resume...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-teal-50 dark:bg-teal-900/20 border-b border-teal-100 dark:border-teal-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-teal-900 dark:text-teal-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                            Projects
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="detectedProjects" class="text-gray-600 dark:text-gray-400 text-sm">
+                            <p class="italic">Analyzing resume...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Certifications/Achievements -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800 px-6 py-4">
+                        <h3 class="text-lg font-bold text-yellow-900 dark:text-yellow-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            Certifications & Achievements
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div id="detectedCertifications" class="text-gray-600 dark:text-gray-400 text-sm">
+                            <p class="italic">Analyzing resume...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Comparison -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-brand-600 dark:text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    Performance Comparison
+                </h3>
+                <div id="scoreComparison" class="grid md:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Recommendations Section -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md border border-blue-200 dark:border-blue-800 p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    Personalized Recommendations
+                </h3>
+                <div id="recommendations" class="space-y-3"></div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="text-center pt-4">
+                <button 
+                    onclick="window.location.reload()" 
+                    class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Analyze Another Resume
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="text-gray-600 dark:text-gray-300 text-sm mb-4 md:mb-0">
+                    © 2025 Resume Analyzer. Professional ATS Resume Analysis Tool.
+                </div>
+                <div class="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        Secure
+                    </span>
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        Private
+                    </span>
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-brand-500 dark:text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                        </svg>
+                        Fast
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - ATS Resume Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <!-- Professional Header (glassmorphism) - shared navbar from index.html -->
+    <header class="backdrop-blur-md bg-white/60 dark:bg-black/40 border-b border-white/10 dark:border-gray-700/30 sticky top-0 z-50 shadow-sm" style="-webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-8 h-8 text-brand-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">MLATS</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                    <a href="/about" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition">About</a>
+                    <a href="/ai" class="text-sm text-gray-600/50 dark:text-gray-300/50 hover:text-brand-600 dark:hover:text-brand-400 transition hidden sm:flex items-center">
+                        Powered by AI
+                    </a>
+                    <!-- Dark mode toggle moved to the right-most position -->
+                    <button id="darkModeToggle" type="button" class="p-2 rounded-lg glass-morphism bg-white/10 dark:bg-black/10 hover:bg-white/20 dark:hover:bg-black/12 transition">
+                        <svg id="sunIcon" class="w-5 h-5 text-gray-600/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-600/50 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                About ATS Resume Checker
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                Your intelligent assistant for optimizing resumes to pass Applicant Tracking Systems
+            </p>
+        </div>
+
+        <!-- What is ATS Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 bg-brand-100 dark:bg-brand-900/30 rounded-lg p-3 mr-4">
+                    <i class="fas fa-robot text-brand-600 dark:text-brand-400 text-3xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">What is an ATS?</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">
+                        An <strong>Applicant Tracking System (ATS)</strong> is software used by companies to manage the recruitment process. 
+                        Over 90% of Fortune 500 companies use ATS to filter and rank resumes before they ever reach human recruiters.
+                    </p>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        These systems scan resumes for specific keywords, formatting, and structure. If your resume isn't optimized for ATS, 
+                        it might be rejected automatically—even if you're the perfect candidate.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 text-center mb-8">Our Features</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-search text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Keyword Analysis</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Identifies matched and missing keywords from job descriptions to improve your resume's relevance.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-green-100 dark:bg-green-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-green-600 dark:text-green-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Comprehensive Scoring</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Get detailed scores for skills, experience, education, projects, and overall ATS compatibility.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-purple-100 dark:bg-purple-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-award text-purple-600 dark:text-purple-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Certification Detection</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Automatically extracts and highlights certifications and achievements from your resume.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-amber-100 dark:bg-amber-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-balance-scale text-amber-600 dark:text-amber-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Score Comparison</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Compare your resume score against the average of all previously analyzed resumes.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-red-100 dark:bg-red-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-lightbulb text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Smart Recommendations</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Receive personalized suggestions to improve specific sections of your resume.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/30 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                        <i class="fas fa-moon text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Dark Mode</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Toggle between light and dark themes for comfortable viewing in any environment.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div class="bg-gradient-to-r from-brand-600 to-brand-700 dark:from-brand-500 dark:to-brand-600 rounded-lg shadow-lg p-8 mb-12 text-white">
+            <h2 class="text-3xl font-bold mb-8 text-center">How It Works</h2>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold">1</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Upload Resume</h3>
+                    <p class="text-sm text-white/90">Upload your resume in PDF or DOCX format</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold">2</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Add Job Description</h3>
+                    <p class="text-sm text-white/90">Paste the complete job posting you're applying for</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold">3</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Analyze</h3>
+                    <p class="text-sm text-white/90">Our AI analyzes your resume against the job requirements</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold">4</span>
+                    </div>
+                    <h3 class="font-semibold mb-2">Optimize</h3>
+                    <p class="text-sm text-white/90">Follow recommendations to improve your resume</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Stack -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Technology Stack</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <i class="fas fa-server text-brand-600 dark:text-brand-400 mr-2"></i>
+                        Backend
+                    </h3>
+                    <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Python Flask:</strong> Web framework</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>PyPDF2:</strong> PDF text extraction</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>python-docx:</strong> DOCX parsing</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Custom ATS Engine:</strong> Proprietary scoring algorithms</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                        <i class="fas fa-laptop-code text-brand-600 dark:text-brand-400 mr-2"></i>
+                        Frontend
+                    </h3>
+                    <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Tailwind CSS:</strong> Modern UI styling</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Vanilla JavaScript:</strong> Interactive features</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Font Awesome:</strong> Icon library</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i><strong>Responsive Design:</strong> Mobile-friendly interface</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Ready to Optimize Your Resume?</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">
+                Start analyzing your resume now and increase your chances of landing interviews
+            </p>
+            <a href="/" class="inline-block bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white font-semibold px-8 py-4 rounded-lg transition shadow-lg hover:shadow-xl">
+                <i class="fas fa-rocket mr-2"></i>Get Started Now
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center text-gray-600 dark:text-gray-400">
+                <p class="mb-2">
+                    <i class="fas fa-code mr-2"></i>
+                    Built with <i class="fas fa-heart text-red-500 mx-1"></i> for job seekers everywhere
+                </p>
+                <p class="text-sm">
+                    &copy; 2025 ATS Resume Checker. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Shared scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
