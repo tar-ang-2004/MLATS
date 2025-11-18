@@ -41,26 +41,52 @@ except ImportError as e:
     class ATSScorer:
         def __init__(self, *args, **kwargs):
             pass
-        def calculate_score(self, *args, **kwargs):
-            return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
+            def calculate_score(self, *args, **kwargs):
+                return {'score': 50, 'message': 'ML features disabled - basic scoring only'}
+
+            def score_resume(self, resume_text, job_description):
+                # Return a minimal scoring result compatible with the app
+                return {
+                    'skills_score': 50.0,
+                    'header_score': 50.0,
+                    'experience_score': 50.0,
+                    'projects_score': 50.0,
+                    'education_score': 50.0,
+                    'format_score': 50.0,
+                    'matched_skills': [],
+                    'missing_skills': [],
+                    'overall_score': 50
+                }
     
     class ResumeParser:
         def __init__(self, *args, **kwargs):
             pass
-        def parse_resume(self, *args, **kwargs):
-            return {'skills': [], 'experience': [], 'education': []}
+            def parse_resume(self, *args, **kwargs):
+                return {'skills': [], 'experience': [], 'education': [], 'projects': [], 'certifications': []}
+
+            # alias used by the application
+            def parse(self, text):
+                return self.parse_resume(text)
     
     class ResumeExtractor:
         def __init__(self, *args, **kwargs):
             pass
-        def extract_text(self, file_path):
-            return "Text extraction disabled - ML dependencies not available"
+            def extract_text(self, file_path):
+                return "Text extraction disabled - ML dependencies not available"
+
+            # compatibility alias if other code expects a different name
+            def extract(self, file_path):
+                return self.extract_text(file_path)
     
     class ContactExtractor:
         def __init__(self, *args, **kwargs):
             pass
-        def extract_contact_info(self, *args, **kwargs):
-            return {'email': '', 'phone': '', 'name': ''}
+            def extract_contact_info(self, *args, **kwargs):
+                return {'email': '', 'phone': '', 'name': ''}
+
+            # application expects `extract_contact`
+            def extract_contact(self, text):
+                return self.extract_contact_info(text)
     
     class SemanticMatcher:
         def __init__(self, *args, **kwargs):
