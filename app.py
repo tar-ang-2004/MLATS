@@ -389,26 +389,26 @@ except ImportError as e:
             
             # Enhanced degree keywords for better detection
             degree_patterns = [
-                r'bachelor\s+of\s+technology',
-                r'b\.?tech',
-                r'bachelor\s+of\s+science',
-                r'b\.?s\.?c?',
-                r'bachelor\s+of\s+arts',
-                r'b\.?a\.?',
-                r'bachelor\s+of\s+engineering',
-                r'b\.?e\.?',
-                r'master\s+of\s+technology',
-                r'm\.?tech',
-                r'master\s+of\s+science',
-                r'm\.?s\.?c?',
-                r'master\s+of\s+arts',
-                r'm\.?a\.?',
-                r'master\s+of\s+business\s+administration',
-                r'm\.?b\.?a\.?',
-                r'doctor\s+of\s+philosophy',
-                r'ph\.?d\.?',
-                r'diploma',
-                r'certificate'
+                r'bachelor\s+of\s+technology[\s–-]*.*',
+                r'b\.?tech[\s–-]*.*',
+                r'bachelor\s+of\s+science[\s–-]*.*',
+                r'b\.?s\.?c?[\s–-]*.*',
+                r'bachelor\s+of\s+arts[\s–-]*.*',
+                r'b\.?a\.?[\s–-]*.*',
+                r'bachelor\s+of\s+engineering[\s–-]*.*',
+                r'b\.?e\.?[\s–-]*.*',
+                r'master\s+of\s+technology[\s–-]*.*',
+                r'm\.?tech[\s–-]*.*',
+                r'master\s+of\s+science[\s–-]*.*',
+                r'm\.?s\.?c?[\s–-]*.*',
+                r'master\s+of\s+arts[\s–-]*.*',
+                r'm\.?a\.?[\s–-]*.*',
+                r'master\s+of\s+business\s+administration[\s–-]*.*',
+                r'm\.?b\.?a\.?[\s–-]*.*',
+                r'doctor\s+of\s+philosophy[\s–-]*.*',
+                r'ph\.?d\.?[\s–-]*.*',
+                r'diploma[\s–-]*.*',
+                r'certificate[\s–-]*.*'
             ]
             
             for line in lines:
@@ -445,9 +445,17 @@ except ImportError as e:
                         current_edu['dates'] = line_clean
                     
                     # Enhanced degree detection using patterns
-                    elif current_edu and any(re.search(pattern, line_lower) for pattern in degree_patterns):
-                        if not current_edu['degree']:
-                            current_edu['degree'] = line_clean
+                    elif current_edu:
+                        # Check for degree patterns in the line
+                        degree_match = None
+                        for pattern in degree_patterns:
+                            match = re.search(pattern, line_lower)
+                            if match:
+                                degree_match = line_clean
+                                break
+                        
+                        if degree_match and not current_edu['degree']:
+                            current_edu['degree'] = degree_match
                     
                     # Field of study detection
                     elif current_edu and any(word in line_lower for word in ['computer science', 'engineering', 'science', 'arts', 'commerce', 'management']):
@@ -467,14 +475,17 @@ except ImportError as e:
                 if edu.get('dates'):
                     edu_text += f" ({edu['dates']})"
                 
-                # Add degree information
+                # Add degree information with field
                 if edu.get('degree'):
-                    edu_text += f"\n{edu['degree']}"
+                    degree_text = edu['degree']
+                    # If field is separate and not already in degree, add it
+                    if edu.get('field') and edu['field'].lower() not in degree_text.lower():
+                        degree_text += f" - {edu['field']}"
+                    edu_text += f"\n{degree_text}"
                 elif edu.get('field'):
                     edu_text += f"\nDegree in {edu['field']}"
                 else:
-                    # Don't show "Degree not specified" - leave it clean
-                    pass
+                    edu_text += "\nDegree not specified"
                     
                 formatted_education.append(edu_text)
             
