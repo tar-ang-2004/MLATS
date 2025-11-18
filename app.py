@@ -377,7 +377,8 @@ except ImportError as e:
                     
                 formatted_experience.append(formatted_exp)
             
-            return formatted_experience[:5]
+            # Return structured data for JavaScript to format properly
+            return experience[:5]
             
         def _extract_education(self, lines, resume_text):
             """Extract education with robust degree detection and proper formatting"""
@@ -456,6 +457,10 @@ except ImportError as e:
                         
                         if degree_match and not current_edu['degree']:
                             current_edu['degree'] = degree_match
+                        
+                        # Fallback: if line contains degree-related keywords, capture it
+                        elif not current_edu['degree'] and any(keyword in line_lower for keyword in ['bachelor', 'master', 'b.tech', 'btech', 'm.tech', 'mtech', 'b.sc', 'bsc', 'm.sc', 'msc', 'phd', 'ph.d', 'degree']):
+                            current_edu['degree'] = line_clean
                     
                     # Field of study detection
                     elif current_edu and any(word in line_lower for word in ['computer science', 'engineering', 'science', 'arts', 'commerce', 'management']):
@@ -466,30 +471,15 @@ except ImportError as e:
             if current_edu:
                 education.append(current_edu)
             
-            # Format for display with proper degree recognition
-            formatted_education = []
+            # Return structured data with proper degree formatting
             for edu in education:
-                edu_text = edu['institution']
-                
-                # Add dates to institution if available
-                if edu.get('dates'):
-                    edu_text += f" ({edu['dates']})"
-                
-                # Add degree information with field
-                if edu.get('degree'):
-                    degree_text = edu['degree']
-                    # If field is separate and not already in degree, add it
-                    if edu.get('field') and edu['field'].lower() not in degree_text.lower():
-                        degree_text += f" - {edu['field']}"
-                    edu_text += f"\n{degree_text}"
-                elif edu.get('field'):
-                    edu_text += f"\nDegree in {edu['field']}"
-                else:
-                    edu_text += "\nDegree not specified"
-                    
-                formatted_education.append(edu_text)
+                # Ensure degree is properly formatted
+                if not edu.get('degree') and not edu.get('field'):
+                    edu['degree'] = 'Degree not specified'
+                elif edu.get('degree') and edu.get('field') and edu['field'].lower() not in edu['degree'].lower():
+                    edu['degree'] = f"{edu['degree']} - {edu['field']}"
             
-            return formatted_education[:3]
+            return education[:3]
             
         def _extract_projects(self, lines, resume_text):
             """Extract projects with detailed bullet points and achievements"""
@@ -557,35 +547,8 @@ except ImportError as e:
             if current_project:
                 projects.append(current_project)
             
-            # Format for display with enhanced bullet points
-            formatted_projects = []
-            for proj in projects:
-                # Main title line
-                proj_text = proj['name']
-                if proj.get('technologies'):
-                    proj_text += f" ({proj['technologies']})"
-                
-                # Create a comprehensive bullet point
-                bullet_content = []
-                
-                if proj.get('achievements'):
-                    # Use the first, most impactful achievement
-                    main_achievement = proj['achievements'][0]
-                    bullet_content.append(main_achievement[:250])  # Limit length
-                elif proj.get('description'):
-                    # Use description as fallback
-                    bullet_content.append(proj['description'][:250])
-                else:
-                    # Default achievement bullet
-                    bullet_content.append(f"Developed using {proj.get('technologies', 'modern technologies')} with focus on performance and scalability")
-                
-                # Add the bullet point
-                if bullet_content:
-                    proj_text += f"\n• {bullet_content[0]}"
-                    
-                formatted_projects.append(proj_text)
-            
-            return formatted_projects[:5]
+            # Return structured data for JavaScript to format properly
+            return projects[:5]
             
         def _extract_certifications(self, lines, resume_text):
             """Extract certifications with proper formatting"""
