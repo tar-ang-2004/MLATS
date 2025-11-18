@@ -19,18 +19,16 @@ class Resume(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = db.Column(db.String(255), nullable=False)
     upload_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     file_size = db.Column(db.Integer)  # in bytes
     file_type = db.Column(db.String(10))  # pdf, docx
     
     # Analysis results
-    overall_score = db.Column(db.Float, nullable=False, default=0.0)  # 0-100
+    overall_score = db.Column(db.Integer, nullable=False)  # 0-100
     classification = db.Column(db.String(50))  # Good Fit, Potential Fit, No Fit
     
     # Section scores
     skills_score = db.Column(db.Float, nullable=False, default=0.0)
     header_score = db.Column(db.Float, nullable=False, default=0.0)
-    contact_score = db.Column(db.Float, nullable=False, default=0.0)
     # Header job title written by candidate at top of resume
     header_job_title = db.Column(db.String(300))
     experience_score = db.Column(db.Float, nullable=False, default=0.0)
@@ -84,7 +82,6 @@ class ContactInfo(db.Model):
     resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
     
     # Personal information
-    name = db.Column(db.String(200))  # Changed from full_name
     full_name = db.Column(db.String(200))
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
@@ -94,7 +91,6 @@ class ContactInfo(db.Model):
     phone = db.Column(db.String(50))
     
     # Location
-    location = db.Column(db.String(300))  # Added for compatibility
     address = db.Column(db.Text)
     city = db.Column(db.String(100))
     state = db.Column(db.String(100))
@@ -102,9 +98,7 @@ class ContactInfo(db.Model):
     postal_code = db.Column(db.String(20))
     
     # Professional profiles
-    linkedin = db.Column(db.String(500))  # Changed from linkedin_url
     linkedin_url = db.Column(db.String(500))
-    github = db.Column(db.String(500))  # Changed from github_url
     github_url = db.Column(db.String(500))
     portfolio_url = db.Column(db.String(500))
     
@@ -124,7 +118,6 @@ class ResumeSkill(db.Model):
     resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
     
     skill_name = db.Column(db.String(200), nullable=False)
-    category = db.Column(db.String(100))  # Changed from skill_category for compatibility
     skill_category = db.Column(db.String(100))  # Technical, Soft, Language, etc.
     proficiency_level = db.Column(db.String(50))  # Beginner, Intermediate, Advanced, Expert
     years_experience = db.Column(db.Integer)
