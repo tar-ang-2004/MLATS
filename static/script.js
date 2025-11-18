@@ -252,9 +252,7 @@ function displayResults(data) {
             ? skills.map(skill => `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 mr-2 mb-2">${skill}</span>`).join("")
             : "<p class=\"italic text-gray-500 dark:text-gray-400\">No skills detected in resume</p>";
         
-        // Experience - Advanced parsing for ATS resume format
-        const experience = data.parsed_sections.experience || [];
-        
+        // Helper function for HTML escaping
         function escapeHtml(str) {
             if (!str && str !== 0) return '';
             return String(str)
@@ -265,67 +263,44 @@ function displayResults(data) {
                 .replace(/'/g, '&#39;');
         }
 
-        function parseATSExperience(rawText) {
-            if (!rawText) return [];
-            
-            const text = String(rawText).replace(/\u00A0/g, ' ');
-            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            
-            const experiences = [];
-            let currentExp = null;
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                
-                // COMPLETELY SKIP ALL bullet points and achievement lines
-                if (/^[\s\-\u2022\*•·]+/.test(line) || 
-                    /achieved|reduced|enhanced|delivered|built|developed|implemented|designed|created|managed|led|improved/i.test(line)) {
-                    continue;
-                }
-                
-                // Detect company header: "Company Name — Job Title" 
-                const companyTitleMatch = line.match(/^(.+?)\s*[—–-]\s*(.+)$/);
-                if (companyTitleMatch) {
-                    // Save previous experience if exists
-                    if (currentExp) experiences.push(currentExp);
+        // Experience - Handle structured objects
+        const experience = data.parsed_sections.experience || [];
+        if (experience.length === 0) {
+            document.getElementById("detectedExperience").innerHTML = "<p class=\\"italic text-gray-500 dark:text-gray-400\\">No experience detected in resume</p>";
+        } else {
+            let html = '<div class="space-y-4">';
+            experience.forEach(exp => {
+                if (typeof exp === 'object' && exp.company && exp.title) {
+                    html += `<div>`;
+                    html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${escapeHtml(exp.company)} — ${escapeHtml(exp.title)}</p>`;
                     
-                    currentExp = {
-                        company: companyTitleMatch[1].trim(),
-                        title: companyTitleMatch[2].trim(),
-                        location: '',
-                        duration: ''
-                    };
-                    continue;
-                }
-                
-                // Look for location/date line 
-                if (currentExp && !currentExp.location) {
-                    // Check if line contains location keywords or dates
-                    if (/\b(Delhi|Mumbai|Bangalore|Hyderabad|Chennai|Pune|Remote)\b/i.test(line) || /\d{2}\/\d{4}/.test(line)) {
-                        // Parse "Delhi | Remote · 07/2025 – 12/2025" format
-                        const parts = line.split(/[|·]/);
-                        if (parts.length >= 2) {
-                            currentExp.location = parts[0].trim();
-                            currentExp.duration = parts[1].trim();
-                        } else {
-                            // Single line with location and dates
-                            const dateMatch = line.match(/(\d{2}\/\d{4}\s*[–-]\s*\d{2}\/\d{4})/);
-                            if (dateMatch) {
-                                currentExp.location = line.replace(dateMatch[0], '').trim().replace(/[·|]/g, '').trim();
-                                currentExp.duration = dateMatch[1].trim();
-                            } else {
-                                currentExp.location = line;
-                            }
-                        }
+                    // Add location and dates
+                    let details = [];
+                    if (exp.location) details.push(escapeHtml(exp.location));
+                    if (exp.dates) details.push(escapeHtml(exp.dates));
+                    if (details.length > 0) {
+                        html += `<p class="text-sm text-gray-400 mt-1">${details.join(' · ')}</p>`;
                     }
+                    
+                    // Add achievements with bullet points
+                    if (exp.achievements && exp.achievements.length > 0) {
+                        html += '<div class="mt-2 text-sm text-gray-700 dark:text-gray-300">';
+                        exp.achievements.forEach(achievement => {
+                            html += `<p class="flex items-start mb-1"><span class="text-blue-500 mr-2 mt-0.5">□</span><span>${escapeHtml(achievement)}</span></p>`;
+                        });
+                        html += '</div>';
+                    } else if (exp.description) {
+                        html += `<p class="mt-2 text-sm text-gray-600 dark:text-gray-400"><span class="text-blue-500 mr-2">□</span>${escapeHtml(exp.description)}</p>`;
+                    }
+                    
+                    html += `</div>`;
                 }
-            }
-            
-            // Add the last experience
-            if (currentExp) experiences.push(currentExp);
-            
-            return experiences;
+            });
+            html += '</div>';
+            document.getElementById("detectedExperience").innerHTML = html;
         }
+                
+
 
         function calculateTenure(duration) {
             if (!duration) return '';
@@ -360,11 +335,9 @@ function displayResults(data) {
         let allExperiences = [];
         for (const exp of experience) {
             const expText = typeof exp === 'string' ? exp : (exp.text || JSON.stringify(exp));
-            const parsed = parseATSExperience(expText);
-            allExperiences = allExperiences.concat(parsed);
         }
 
-        // Render experiences in the requested format
+        // Render experiences with achievements and bullet points
         if (allExperiences.length === 0) {
             document.getElementById("detectedExperience").innerHTML = "<p class=\"italic text-gray-500 dark:text-gray-400\">No experience detected in resume</p>";
         } else {
@@ -374,6 +347,18 @@ function displayResults(data) {
                 html += `<div>`;
                 html += `<p class="text-sm text-gray-900 dark:text-gray-100 font-semibold">${escapeHtml(exp.company)} — ${escapeHtml(exp.title)}</p>`;
                 html += `<p class="text-sm text-gray-400 mt-1">${escapeHtml(exp.location)}${exp.location && exp.duration ? ' · ' : ''}${escapeHtml(exp.duration)}${tenure}</p>`;
+                
+                // Add achievements with bullet points
+                if (exp.achievements && exp.achievements.length > 0) {
+                    html += '<ul class="mt-2 text-sm text-gray-700 dark:text-gray-300">';
+                    exp.achievements.forEach(achievement => {
+                        html += `<li class="flex items-start mb-1"><span class="text-blue-500 mr-2">□</span>${escapeHtml(achievement)}</li>`;
+                    });
+                    html += '</ul>';
+                } else if (exp.description) {
+                    html += `<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">□ ${escapeHtml(exp.description)}</p>`;
+                }
+                
                 html += `</div>`;
             });
             html += '</div>';
@@ -382,88 +367,25 @@ function displayResults(data) {
         
         console.debug('Parsed ATS Experiences:', allExperiences);
         
-        // Education - handle both string arrays and object arrays
-        // Filter out entries that look like certifications so the Education section doesn't include certificates
+        // Education - handle structured education objects
         const education = data.parsed_sections.education || [];
-        // Stronger heuristics to detect certifications that may appear inside the Education array
-        function looksLikeCertification(text) {
-            if (!text) return false;
-            const t = (typeof text === 'string') ? text : (text.text || JSON.stringify(text));
-            const lower = t.toLowerCase();
-            // Known certification/course providers or keywords
-            const providerPattern = /\b(ibm|coursera|udemy|edx|google|microsoft|amazon web services|aws|kaggle|pluralsight|linkedin learning|linkedin|deep ?learning|deeplearning\.ai|certif|certificate|certification|course|training|bootcamp)\b/i;
-            if (providerPattern.test(t)) return true;
-            // Lines that are short and contain a year (e.g., "(2025)") and common cert words
-            if (/\(\s*(19|20)\d{2}\s*\)/.test(t) && t.length < 140) {
-                const certContext = /(python|data science|deep learning|tensorflow|machine learning|101|applied data|for data|with|certificate|certification)/i;
-                if (certContext.test(t)) return true;
-            }
-            // A header-like 'CERTIFICATIONS' or 'CERTIFICATES' keyword
-            if (/^\s*certificat/i.test(t)) return true;
-            return false;
+
+        // Handle structured education objects
+        let allEducation = [];
+        if (education && education.length > 0) {
+            allEducation = education.map(edu => {
+                if (typeof edu === 'object') {
+                    return {
+                        institution: edu.institution || 'Unknown Institution',
+                        degree: edu.degree || 'Degree not specified',
+                        dates: edu.dates || '',
+                        field: edu.field || ''
+                    };
+                }
+                return null;
+            }).filter(Boolean);
         }
 
-        function parseATSEducation(rawText) {
-            if (!rawText) return null;
-            
-            const text = String(rawText).replace(/\u00A0/g, ' ');
-            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            
-            let institution = '';
-            let location = '';
-            let duration = '';
-            let degree = '';
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                
-                // First line is usually the institution
-                if (i === 0 || (!institution && /Institute|University|College|School/i.test(line))) {
-                    institution = line;
-                    continue;
-                }
-                
-                // Look for location and dates pattern: "Delhi · 10/2022 – 07/2026"
-                if (/\d{2}\/\d{4}/.test(line) && /Delhi|Mumbai|Bangalore|Remote/i.test(line)) {
-                    const parts = line.split('·');
-                    if (parts.length >= 2) {
-                        location = parts[0].trim();
-                        duration = parts[1].trim();
-                    } else {
-                        // Try to extract from single line
-                        const match = line.match(/^([^0-9]+?)\s*[\s·]\s*(\d{2}\/\d{4}\s*[–-]\s*\d{2}\/\d{4})/);
-                        if (match) {
-                            location = match[1].trim();
-                            duration = match[2].trim();
-                        }
-                    }
-                    continue;
-                }
-                
-                // Look for degree information - be more flexible
-                if (/Bachelor|Master|PhD|Degree|Engineering|Technology|Science|Arts|Commerce|B\.?Tech|M\.?Tech|Computer|Software/i.test(line) && 
-                    !/not specified/i.test(line)) {
-                    degree = line;
-                    continue;
-                }
-                
-                // Also check for degree patterns in other lines
-                if (!degree && i > 0 && line.length > 10 && line.length < 80) {
-                    // If it's not location/date and not institution, it might be degree
-                    if (!/\d{2}\/\d{4}/.test(line) && !/Delhi|Mumbai|Bangalore|Remote|Institute|University|College/i.test(line)) {
-                        degree = line;
-                        continue;
-                    }
-                }
-            }
-            
-            return {
-                institution: institution || 'Unknown Institution',
-                location: location,
-                duration: duration,
-                degree: degree || 'Degree not specified'
-            };
-        }
 
         const filteredEducation = education.filter(edu => {
             const eduText = typeof edu === 'string' ? edu : (edu.text || JSON.stringify(edu));
