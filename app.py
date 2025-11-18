@@ -268,18 +268,11 @@ except ImportError as e:
             }
             
         def _extract_experience(self, lines, resume_text):
-            """Extract work experience with company names, titles, and descriptions"""
+            """Extract work experience with proper formatting and structure"""
             experience = []
             resume_lower = resume_text.lower()
             
-            # Common company indicators
-            company_indicators = ['inc', 'corp', 'ltd', 'llc', 'company', 'technologies', 'systems', 'solutions']
-            title_indicators = ['engineer', 'developer', 'analyst', 'manager', 'specialist', 'consultant', 'intern', 'lead']
-            
-            # Look for date patterns (years)
-            years = re.findall(r'\b(19|20)\d{2}\b', resume_text)
-            
-            current_exp = {}
+            current_exp = None
             in_experience_section = False
             
             for i, line in enumerate(lines):
@@ -287,69 +280,84 @@ except ImportError as e:
                 line_lower = line_clean.lower()
                 
                 # Check if we're in experience section
-                if any(keyword in line_lower for keyword in ['experience', 'employment', 'work history', 'professional']):
+                if 'experience' in line_lower and len(line_clean) < 30:
                     in_experience_section = True
                     continue
                     
-                # Reset if we hit another major section
-                if line_lower.startswith(('education', 'skills', 'projects', 'certifications')) and len(line_clean) < 50:
+                # Stop if we hit another section
+                if any(section in line_lower for section in ['projects', 'education', 'skills', 'certifications']) and len(line_clean) < 30:
+                    if current_exp:
+                        experience.append(current_exp)
+                        current_exp = None
                     in_experience_section = False
+                    continue
                     
-                if in_experience_section and line_clean and len(line_clean) > 10:
-                    # Check for company name patterns
-                    if any(indicator in line_lower for indicator in company_indicators) or re.search(r'\b[A-Z][a-zA-Z\s&-]{2,30}\b', line_clean):
+                if in_experience_section and line_clean:
+                    # Look for company and title pattern (Company — Title)
+                    if '—' in line_clean or ' - ' in line_clean:
                         if current_exp:
                             experience.append(current_exp)
-                        current_exp = {
-                            'company': line_clean[:100],
-                            'title': 'Position',
-                            'description': '',
-                            'start_date': None,
-                            'end_date': None
-                        }
-                    # Check for job title patterns  
-                    elif any(indicator in line_lower for indicator in title_indicators):
-                        if current_exp:
-                            current_exp['title'] = line_clean[:100]
-                    # Add as description if we have current experience
-                    elif current_exp and len(line_clean) > 20:
-                        current_exp['description'] += line_clean + ' '
                         
-            # Add final experience if exists
+                        # Split company and title
+                        if '—' in line_clean:
+                            parts = line_clean.split('—', 1)
+                        else:
+                            parts = line_clean.split(' - ', 1)
+                            
+                        company = parts[0].strip()
+                        title = parts[1].strip() if len(parts) > 1 else 'Position'
+                        
+                        current_exp = {
+                            'company': company,
+                            'title': title,
+                            'description': '',
+                            'dates': '',
+                            'location': ''
+                        }
+                    
+                    # Look for date patterns
+                    elif current_exp and re.search(r'\d{2}/\d{4}|\d{4}', line_clean):
+                        current_exp['dates'] = line_clean
+                    
+                    # Look for location patterns
+                    elif current_exp and ('|' in line_clean or 'remote' in line_lower or any(word in line_lower for word in ['delhi', 'mumbai', 'bangalore', 'india'])):
+                        current_exp['location'] = line_clean
+                    
+                    # Add to description (bullet points or paragraphs)
+                    elif current_exp and (line_clean.startswith(('•', '-', '*')) or len(line_clean) > 30):
+                        if current_exp['description']:
+                            current_exp['description'] += ' '
+                        current_exp['description'] += line_clean
+            
+            # Add final experience
             if current_exp:
                 experience.append(current_exp)
+            
+            # Format for display - convert to readable strings
+            formatted_experience = []
+            for exp in experience:
+                desc_parts = []
+                if exp.get('dates'):
+                    desc_parts.append(f"Duration: {exp['dates']}")
+                if exp.get('location'):
+                    desc_parts.append(f"Location: {exp['location']}")
+                if exp.get('description'):
+                    desc_parts.append(exp['description'][:500])
                 
-            # If no structured experience found but experience keywords exist, create generic entries
-            if not experience and any(keyword in resume_lower for keyword in ['experience', 'worked', 'employed']):
-                if years:
-                    experience.append({
-                        'company': 'Previous Employer',
-                        'title': 'Professional Role', 
-                        'description': f'Professional experience from {min(years)} to {max(years)}. Full details require advanced parsing.',
-                        'start_date': None,
-                        'end_date': None
-                    })
-                else:
-                    experience.append({
-                        'company': 'Professional Experience',
-                        'title': 'Various Roles',
-                        'description': 'Work experience detected. Detailed extraction requires full ML parsing.',
-                        'start_date': None,
-                        'end_date': None
-                    })
+                formatted_exp = f"{exp['company']} — {exp['title']}"
+                if desc_parts:
+                    formatted_exp += f"\n{' | '.join(desc_parts)}"
                     
-            return experience[:5]  # Limit to 5 experiences
+                formatted_experience.append(formatted_exp)
+            
+            return formatted_experience[:5]
             
         def _extract_education(self, lines, resume_text):
-            """Extract education with institutions and degrees"""
+            """Extract education with proper formatting"""
             education = []
             resume_lower = resume_text.lower()
             
-            # Education keywords
-            edu_keywords = ['university', 'college', 'institute', 'school', 'academy']
-            degree_keywords = ['bachelor', 'master', 'phd', 'doctorate', 'diploma', 'certificate', 'degree', 'b.s', 'm.s', 'b.a', 'm.a', 'b.tech', 'm.tech']
-            
-            current_edu = {}
+            current_edu = None
             in_education_section = False
             
             for line in lines:
@@ -357,55 +365,70 @@ except ImportError as e:
                 line_lower = line_clean.lower()
                 
                 # Check if we're in education section
-                if 'education' in line_lower and len(line_clean) < 50:
+                if 'education' in line_lower and len(line_clean) < 30:
                     in_education_section = True
                     continue
                     
-                # Reset if we hit another section
-                if line_lower.startswith(('experience', 'skills', 'projects', 'certifications')) and len(line_clean) < 50:
+                # Stop at other sections
+                if any(section in line_lower for section in ['experience', 'projects', 'skills', 'certifications']) and len(line_clean) < 30:
+                    if current_edu:
+                        education.append(current_edu)
+                        current_edu = None
                     in_education_section = False
+                    continue
                     
-                if (in_education_section or any(keyword in line_lower for keyword in edu_keywords)) and line_clean:
-                    # Check for institution
-                    if any(keyword in line_lower for keyword in edu_keywords):
+                if in_education_section and line_clean:
+                    # Institution name (usually the first substantial line)
+                    if any(word in line_lower for word in ['university', 'institute', 'college', 'technology', 'engineering']):
                         if current_edu:
                             education.append(current_edu)
                         current_edu = {
-                            'institution': line_clean[:200],
+                            'institution': line_clean,
                             'degree': '',
-                            'major': '',
-                            'graduation_date': None
+                            'dates': '',
+                            'details': []
                         }
-                    # Check for degree
-                    elif any(keyword in line_lower for keyword in degree_keywords) and current_edu:
-                        current_edu['degree'] = line_clean[:200]
-                    # Check for major/field
-                    elif current_edu and ('in ' in line_lower or 'major' in line_lower):
-                        current_edu['major'] = line_clean[:200]
-                        
-            # Add final education if exists
+                    
+                    # Dates pattern
+                    elif current_edu and re.search(r'\d{2}/\d{4}|\d{4}', line_clean):
+                        current_edu['dates'] = line_clean
+                    
+                    # Degree information
+                    elif current_edu and any(word in line_lower for word in ['bachelor', 'master', 'degree', 'technology', 'computer', 'science']):
+                        if not current_edu['degree']:
+                            current_edu['degree'] = line_clean
+                        else:
+                            current_edu['details'].append(line_clean)
+                    
+                    # Additional details
+                    elif current_edu and len(line_clean) > 10:
+                        current_edu['details'].append(line_clean)
+            
+            # Add final education
             if current_edu:
                 education.append(current_edu)
-                
-            # If no structured education found but keywords exist, create generic entry
-            if not education and any(keyword in resume_lower for keyword in edu_keywords + degree_keywords):
-                education.append({
-                    'institution': 'Educational Institution',
-                    'degree': 'Academic Qualification',
-                    'major': 'Field of Study',
-                    'graduation_date': None
-                })
-                
-            return education[:3]  # Limit to 3 education entries
+            
+            # Format for display
+            formatted_education = []
+            for edu in education:
+                edu_text = edu['institution']
+                if edu.get('degree'):
+                    edu_text += f"\n{edu['degree']}"
+                if edu.get('dates'):
+                    edu_text += f" ({edu['dates']})"
+                if edu.get('details'):
+                    edu_text += f"\n{' | '.join(edu['details'][:2])}"
+                    
+                formatted_education.append(edu_text)
+            
+            return formatted_education[:3]
             
         def _extract_projects(self, lines, resume_text):
-            """Extract projects with names and descriptions"""
+            """Extract projects with proper formatting and structure"""
             projects = []
             resume_lower = resume_text.lower()
             
-            project_indicators = ['project', 'built', 'developed', 'created', 'designed', 'implemented']
-            
-            current_project = {}
+            current_project = None
             in_projects_section = False
             
             for line in lines:
@@ -413,74 +436,110 @@ except ImportError as e:
                 line_lower = line_clean.lower()
                 
                 # Check if we're in projects section
-                if 'project' in line_lower and len(line_clean) < 50:
+                if 'project' in line_lower and len(line_clean) < 30:
                     in_projects_section = True
                     continue
                     
-                # Reset if we hit another section
-                if line_lower.startswith(('experience', 'education', 'skills', 'certifications')) and len(line_clean) < 50:
+                # Stop at other sections
+                if any(section in line_lower for section in ['experience', 'education', 'skills', 'certifications']) and len(line_clean) < 30:
+                    if current_project:
+                        projects.append(current_project)
+                        current_project = None
                     in_projects_section = False
+                    continue
                     
-                if (in_projects_section or any(indicator in line_lower for indicator in project_indicators)) and line_clean and len(line_clean) > 10:
-                    # Potential project title
-                    if (line_clean.count(' ') < 8 and len(line_clean) < 100 and 
-                        not line_lower.startswith(('•', '-', '*', '1.', '2.', '3.'))):
+                if in_projects_section and line_clean:
+                    # Project title with technologies (pattern: Title (Tech1, Tech2))
+                    if '(' in line_clean and ')' in line_clean and not line_clean.startswith(('•', '-', '*')):
                         if current_project:
                             projects.append(current_project)
+                        
+                        # Extract title and technologies
+                        title_part = line_clean.split('(')[0].strip()
+                        tech_part = ''
+                        if '(' in line_clean:
+                            tech_part = line_clean[line_clean.find('(')+1:line_clean.find(')')]
+                        
                         current_project = {
-                            'name': line_clean[:200],
+                            'name': title_part,
+                            'technologies': tech_part,
                             'description': '',
-                            'technologies': []
+                            'achievements': []
                         }
-                    # Add to description if we have a current project
-                    elif current_project and len(line_clean) > 15:
-                        current_project['description'] += line_clean + ' '
-                        # Extract technologies from description
-                        for skill in self.common_skills:
-                            if skill.lower() in line_lower and skill not in current_project['technologies']:
-                                current_project['technologies'].append(skill)
-                                
-            # Add final project if exists
+                    
+                    # Project achievements/descriptions (bullet points)
+                    elif current_project and (line_clean.startswith(('•', '-', '*')) or 'achieved' in line_lower or 'built' in line_lower):
+                        current_project['achievements'].append(line_clean.lstrip('•-* '))
+                    
+                    # Additional description
+                    elif current_project and len(line_clean) > 20:
+                        if current_project['description']:
+                            current_project['description'] += ' '
+                        current_project['description'] += line_clean
+            
+            # Add final project
             if current_project:
                 projects.append(current_project)
+            
+            # Format for display
+            formatted_projects = []
+            for proj in projects:
+                proj_text = proj['name']
+                if proj.get('technologies'):
+                    proj_text += f" ({proj['technologies']})"
                 
-            # If no structured projects found but keywords exist, create generic entries
-            if not projects and any(keyword in resume_lower for keyword in project_indicators):
-                projects.append({
-                    'name': 'Development Project',
-                    'description': 'Project work detected in resume. Detailed extraction requires advanced parsing.',
-                    'technologies': [skill for skill in self.common_skills[:5] if skill.lower() in resume_lower]
-                })
+                details = []
+                if proj.get('achievements'):
+                    details.extend(proj['achievements'][:3])  # Top 3 achievements
+                elif proj.get('description'):
+                    details.append(proj['description'][:300])
                 
-            return projects[:5]  # Limit to 5 projects
+                if details:
+                    proj_text += f"\n• {' • '.join(details)}"
+                    
+                formatted_projects.append(proj_text)
+            
+            return formatted_projects[:5]
             
         def _extract_certifications(self, lines, resume_text):
-            """Extract certifications and achievements"""
+            """Extract certifications with proper formatting"""
             certifications = []
             resume_lower = resume_text.lower()
             
-            cert_keywords = ['certification', 'certified', 'certificate', 'license', 'achievement', 'award']
+            in_cert_section = False
             
             for line in lines:
                 line_clean = line.strip()
                 line_lower = line_clean.lower()
                 
-                if any(keyword in line_lower for keyword in cert_keywords) and len(line_clean) > 10:
-                    certifications.append({
-                        'name': line_clean[:300],
-                        'issuer': 'Certifying Organization',
-                        'date_earned': None
-                    })
+                # Check if we're in certifications section
+                if 'certification' in line_lower and len(line_clean) < 30:
+                    in_cert_section = True
+                    continue
                     
-            # Generic certification if keywords found but no specific ones
-            if not certifications and any(keyword in resume_lower for keyword in cert_keywords):
-                certifications.append({
-                    'name': 'Professional Certification',
-                    'issuer': 'Relevant Authority',
-                    'date_earned': None
-                })
-                
-            return certifications[:5]  # Limit to 5 certifications
+                # Stop at other sections
+                if any(section in line_lower for section in ['experience', 'education', 'skills', 'projects']) and len(line_clean) < 30:
+                    in_cert_section = False
+                    continue
+                    
+                if in_cert_section and line_clean and len(line_clean) > 10:
+                    # Format: Certification Name (Year) or Certification Name
+                    cert_text = line_clean
+                    if line_clean.startswith(('•', '-', '*')):
+                        cert_text = line_clean.lstrip('•-* ')
+                    
+                    # Extract year if present
+                    year_match = re.search(r'\((\d{4})\)', cert_text)
+                    if year_match:
+                        cert_name = cert_text.replace(year_match.group(), '').strip()
+                        year = year_match.group(1)
+                        formatted_cert = f"{cert_name} ({year})"
+                    else:
+                        formatted_cert = cert_text
+                    
+                    certifications.append(formatted_cert)
+            
+            return certifications[:10]
     
     class ResumeExtractor:
         def __init__(self, *args, **kwargs):
@@ -868,69 +927,73 @@ def save_resume_data(resume_text, job_description, score_result, contact_info, p
             )
             db.session.add(missing_skill)
         
-        # Save experience entries
+        # Save experience entries (now formatted as strings)
         if parsed_sections.get('experience'):
             for exp in parsed_sections['experience'][:10]:  # Limit to 10 entries
-                if isinstance(exp, dict):
+                if isinstance(exp, str):
+                    # Parse the formatted string to extract company and title
+                    lines = exp.split('\n')
+                    first_line = lines[0] if lines else exp
+                    
+                    # Extract company and title from "Company — Title" format
+                    if '—' in first_line:
+                        parts = first_line.split('—', 1)
+                        company = parts[0].strip()
+                        title = parts[1].strip()
+                    else:
+                        company = 'Professional Experience'
+                        title = first_line.strip()
+                    
+                    description = '\n'.join(lines[1:]) if len(lines) > 1 else ''
+                    
                     experience = Experience(
                         resume_id=resume.id,
-                        company_name=exp.get('company', 'Unknown')[:300],
-                        job_title=exp.get('title', 'Unknown')[:300],
-                        description=exp.get('description', '')[:5000],
-                        start_date=exp.get('start_date'),
-                        end_date=exp.get('end_date'),
-                        is_current=exp.get('is_current', False)
-                    )
-                    db.session.add(experience)
-                elif isinstance(exp, str):
-                    # Handle string experience entries
-                    experience = Experience(
-                        resume_id=resume.id,
-                        company_name='Extracted',
-                        job_title='Position',
-                        description=exp[:5000]
+                        company_name=company[:300],
+                        job_title=title[:300],
+                        description=description[:5000]
                     )
                     db.session.add(experience)
         
-        # Save education entries
+        # Save education entries (now formatted as strings)
         if parsed_sections.get('education'):
             for edu in parsed_sections['education'][:10]:  # Limit to 10 entries
-                if isinstance(edu, dict):
+                if isinstance(edu, str):
+                    # Parse the formatted string
+                    lines = edu.split('\n')
+                    institution = lines[0] if lines else 'Educational Institution'
+                    degree = lines[1] if len(lines) > 1 else 'Degree Program'
+                    
                     education = Education(
                         resume_id=resume.id,
-                        institution_name=edu.get('institution', 'Unknown')[:300],
-                        degree_type=edu.get('degree_type', '')[:100],
-                        degree_name=edu.get('degree', '')[:300],
-                        major=edu.get('major', '')[:200],
-                        graduation_date=edu.get('graduation_date')
-                    )
-                    db.session.add(education)
-                elif isinstance(edu, str):
-                    # Handle string education entries
-                    education = Education(
-                        resume_id=resume.id,
-                        institution_name='Extracted',
-                        degree_name=edu[:300]
+                        institution_name=institution[:300],
+                        degree_name=degree[:300]
                     )
                     db.session.add(education)
         
-        # Save projects
+        # Save projects (now formatted as strings)
         if parsed_sections.get('projects'):
             for proj in parsed_sections['projects'][:20]:  # Limit to 20 projects
-                if isinstance(proj, dict):
+                if isinstance(proj, str):
+                    # Parse the formatted string
+                    lines = proj.split('\n')
+                    first_line = lines[0] if lines else proj
+                    
+                    # Extract project name and technologies from "Name (Tech1, Tech2)" format
+                    if '(' in first_line and ')' in first_line:
+                        name_part = first_line.split('(')[0].strip()
+                        tech_part = first_line[first_line.find('(')+1:first_line.find(')')].strip()
+                        technologies = [tech_part] if tech_part else []
+                    else:
+                        name_part = first_line.strip()
+                        technologies = []
+                    
+                    description = '\n'.join(lines[1:]) if len(lines) > 1 else ''
+                    
                     project = Project(
                         resume_id=resume.id,
-                        project_name=proj.get('name', 'Project')[:300],
-                        description=proj.get('description', '')[:2000],
-                        technologies_used=proj.get('technologies', [])
-                    )
-                    db.session.add(project)
-                elif isinstance(proj, str):
-                    # Handle string project entries
-                    project = Project(
-                        resume_id=resume.id,
-                        project_name='Project',
-                        description=proj[:2000]
+                        project_name=name_part[:300],
+                        description=description[:2000],
+                        technologies_used=technologies
                     )
                     db.session.add(project)
         
