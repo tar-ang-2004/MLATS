@@ -151,23 +151,42 @@ app.config.from_object(config)
 # Setup logging (must be done early)
 app_logger, security_logger = setup_logging(app)
 
+# Add after-request handler for static files
+@app.after_request
+def after_request(response):
+    """Add headers for static files and CORS"""
+    # Add proper headers for CSS files
+    if request.endpoint == 'static' or request.path.startswith('/static/'):
+        response.headers['Content-Type'] = 'text/css' if request.path.endswith('.css') else response.headers.get('Content-Type', '')
+        response.headers['Cache-Control'] = 'public, max-age=31536000'  # 1 year cache
+        
+    # Add CORS headers if needed
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    
+    return response
+
 # Initialize security extensions
 csrf = CSRFProtect(app)
 
 # Configure Talisman for security headers
 csp = {
     'default-src': "'self'",
-    'style-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-    'script-src': ["'self'", "'unsafe-inline'"],
+    'style-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+    'script-src': ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
     'img-src': ["'self'", "data:", "https:"],
     'connect-src': ["'self'"],
-    'font-src': ["'self'", "https://cdn.jsdelivr.net"],
+    'font-src': ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
 }
+
+# Detect production environment
+is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('HEROKU_APP_NAME')
 
 talisman = Talisman(
     app,
-    force_https=False,  # Set to True in production
-    strict_transport_security=True,
+    force_https=is_production,  # Enable HTTPS in production
+    strict_transport_security=is_production,
     content_security_policy=csp
 )
 
@@ -505,6 +524,11 @@ def export_csv():
         app_logger.error(f"CSV export error: {e}")
         return jsonify({'error': 'Export failed'}), 500
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files explicitly"""
+    return send_from_directory(app.static_folder, filename)
+
 @app.route('/health')
 def health_check():
     """Health check endpoint"""
@@ -516,7 +540,8 @@ def health_check():
             'status': 'healthy',
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'ats_engine': 'comprehensive_v2',
-            'database': 'connected'
+            'database': 'connected',
+            'static_folder': app.static_folder
         })
     except Exception as e:
         return jsonify({
