@@ -381,14 +381,14 @@ except ImportError as e:
             return experience[:5]
             
         def _extract_education(self, lines, resume_text):
-            """Extract education with robust degree detection and proper formatting"""
+            """Extract education with proper degree vs institution identification"""
             education = []
             resume_lower = resume_text.lower()
             
             current_edu = None
             in_education_section = False
             
-            # Enhanced degree keywords for better detection
+            # Degree patterns - these should be identified as degrees, not institutions
             degree_patterns = [
                 r'bachelor\s+of\s+technology[\s–-]*.*',
                 r'b\.?tech[\s–-]*.*',
@@ -412,6 +412,9 @@ except ImportError as e:
                 r'certificate[\s–-]*.*'
             ]
             
+            # Institution keywords - but avoid degree keywords
+            institution_keywords = ['university', 'institute', 'college', 'academy', 'school']
+            
             for line in lines:
                 line_clean = line.strip()
                 line_lower = line_clean.lower()
@@ -430,72 +433,61 @@ except ImportError as e:
                     continue
                     
                 if in_education_section and line_clean:
-                    # Check for degree patterns first (higher priority)
-                    degree_match = None
+                    # First check if this line is a degree (priority check)
+                    is_degree = False
                     for pattern in degree_patterns:
-                        match = re.search(pattern, line_lower)
-                        if match:
-                            degree_match = line_clean
+                        if re.search(pattern, line_lower):
+                            is_degree = True
+                            if current_edu and not current_edu['degree']:
+                                current_edu['degree'] = line_clean
                             break
                     
-                    # If it's a degree, handle degree assignment
-                    if degree_match:
-                        if not current_edu:
-                            current_edu = {
-                                'institution': '',
-                                'degree': degree_match,
-                                'dates': '',
-                                'field': ''
-                            }
-                        elif not current_edu['degree']:
-                            current_edu['degree'] = degree_match
-                    
-                    # Fallback degree detection for common degree keywords
-                    elif any(keyword in line_lower for keyword in ['bachelor', 'master', 'b.tech', 'btech', 'm.tech', 'mtech', 'b.sc', 'bsc', 'm.sc', 'msc', 'phd', 'ph.d']) and 'degree' not in line_lower:
-                        if not current_edu:
-                            current_edu = {
-                                'institution': '',
-                                'degree': line_clean,
-                                'dates': '',
-                                'field': ''
-                            }
-                        elif not current_edu['degree']:
-                            current_edu['degree'] = line_clean
-                    
-                    # Institution name (only if it doesn't match degree patterns)
-                    elif any(word in line_lower for word in ['university', 'institute', 'college', 'academy', 'school']) and not degree_match:
-                        if current_edu and current_edu['institution']:
-                            education.append(current_edu)
-                        if not current_edu:
-                            current_edu = {
-                                'institution': line_clean,
-                                'degree': '',
-                                'dates': '',
-                                'field': ''
-                            }
-                        elif not current_edu['institution']:
-                            current_edu['institution'] = line_clean
+                    if is_degree:
+                        continue
                     
                     # Dates pattern
-                    elif current_edu and re.search(r'\d{2}/\d{4}|\d{4}', line_clean):
+                    if current_edu and re.search(r'\d{2}/\d{4}|\d{4}', line_clean):
                         current_edu['dates'] = line_clean
+                        continue
                     
-                    # Field of study detection (only if not already a degree)
-                    elif current_edu and any(word in line_lower for word in ['computer science', 'engineering', 'science', 'arts', 'commerce', 'management']) and not degree_match:
-                        if not current_edu['field'] and 'degree' not in line_lower:
-                            current_edu['field'] = line_clean
+                    # Institution name - only if NOT a degree and contains institution keywords
+                    if (any(word in line_lower for word in institution_keywords) and 
+                        not any(re.search(pattern, line_lower) for pattern in degree_patterns)):
+                        if current_edu:
+                            education.append(current_edu)
+                        current_edu = {
+                            'institution': line_clean,
+                            'degree': '',
+                            'dates': '',
+                            'field': ''
+                        }
+                        continue
+                    
+                    # Field of study detection (computer science, engineering, etc.)
+                    if (current_edu and not current_edu['degree'] and 
+                        any(word in line_lower for word in ['computer science', 'engineering', 'science', 'arts', 'commerce', 'management']) and
+                        not any(re.search(pattern, line_lower) for pattern in degree_patterns)):
+                        current_edu['field'] = line_clean
             
             # Add final education
             if current_edu:
                 education.append(current_edu)
             
-            # Return structured data with proper degree formatting
+            # Clean up and validate education entries
+            valid_education = []
             for edu in education:
-                # Ensure degree is properly formatted
-                if not edu.get('degree') and not edu.get('field'):
-                    edu['degree'] = 'Degree not specified'
-                elif edu.get('degree') and edu.get('field') and edu['field'].lower() not in edu['degree'].lower():
-                    edu['degree'] = f"{edu['degree']} - {edu['field']}"
+                # Skip entries that are clearly degrees misidentified as institutions
+                if any(re.search(pattern, edu['institution'].lower()) for pattern in degree_patterns):
+                    continue
+                    
+                # Only add if we have a valid institution
+                if edu['institution'] and len(edu['institution']) > 3:
+                    # If no degree specified and we have a field, that's fine
+                    if not edu['degree'] and not edu['field']:
+                        edu['degree'] = 'Degree information not available'
+                    valid_education.append(edu)
+            
+            return valid_education
             
             return education[:3]
             

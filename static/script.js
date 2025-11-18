@@ -317,10 +317,12 @@ function displayResults(data) {
                     if (edu.dates) {
                         html += `<p class="text-sm text-gray-400 mt-1">${escapeHtml(edu.dates)}</p>`;
                     }
-                    if (edu.degree && edu.degree !== 'Degree not specified') {
+                    if (edu.degree && 
+                        edu.degree !== 'Degree not specified' && 
+                        edu.degree !== 'Degree information not available') {
                         html += `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${escapeHtml(edu.degree)}</p>`;
-                    } else {
-                        html += `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">Degree not specified</p>`;
+                    } else if (edu.field) {
+                        html += `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${escapeHtml(edu.field)}</p>`;
                     }
                     html += `</div>`;
                 }
