@@ -187,8 +187,22 @@ def export_all_resumes_csv(app, db, models, out_path=None):
                     print(f"Failed fallback CSV export: {e2}")
 
 
-def register_export_listeners(app, db, models):
+def register_export_listeners(app):
     """Register SQLAlchemy event listeners to auto-export CSV on changes."""
+    # Import here to avoid circular imports
+    from models import db, Resume, MatchedSkill, MissingSkill, ContactInfo
+    
+    models = {
+        'Resume': Resume,
+        'MatchedSkill': MatchedSkill,
+        'MissingSkill': MissingSkill,
+        'ContactInfo': ContactInfo
+    }
+    
+    return _register_export_listeners_internal(app, db, models)
+
+def _register_export_listeners_internal(app, db, models):
+    """Internal function to register SQLAlchemy event listeners."""
     try:
         from sqlalchemy import event
     except Exception:

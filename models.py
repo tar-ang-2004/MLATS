@@ -5,10 +5,8 @@ Comprehensive schema for storing parsed resume data with proper relationships
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import JSON
 from sqlalchemy import Index
-import uuid
 
 db = SQLAlchemy()
 
@@ -16,7 +14,7 @@ class Resume(db.Model):
     """Main resume record with metadata and analysis results"""
     __tablename__ = 'resumes'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     filename = db.Column(db.String(255), nullable=False)
     upload_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     file_size = db.Column(db.Integer)  # in bytes
@@ -78,8 +76,8 @@ class ContactInfo(db.Model):
     """Contact information extracted from resume"""
     __tablename__ = 'contact_info'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Personal information
     full_name = db.Column(db.String(200))
@@ -114,8 +112,8 @@ class ResumeSkill(db.Model):
     """Skills extracted from resume"""
     __tablename__ = 'resume_skills'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     skill_name = db.Column(db.String(200), nullable=False)
     skill_category = db.Column(db.String(100))  # Technical, Soft, Language, etc.
@@ -138,8 +136,8 @@ class Experience(db.Model):
     """Work experience entries"""
     __tablename__ = 'experiences'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Company information
     company_name = db.Column(db.String(300), nullable=False)
@@ -177,8 +175,8 @@ class Education(db.Model):
     """Education background"""
     __tablename__ = 'education'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Institution information
     institution_name = db.Column(db.String(300), nullable=False)
@@ -218,8 +216,8 @@ class Project(db.Model):
     """Projects mentioned in resume"""
     __tablename__ = 'projects'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Project information
     project_name = db.Column(db.String(300), nullable=False)
@@ -256,8 +254,8 @@ class Certification(db.Model):
     """Certifications and licenses"""
     __tablename__ = 'certifications'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Certification details
     certification_name = db.Column(db.String(300), nullable=False)
@@ -285,8 +283,8 @@ class Achievement(db.Model):
     """Awards, honors, and other achievements"""
     __tablename__ = 'achievements'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     # Achievement details
     achievement_name = db.Column(db.String(300), nullable=False)
@@ -317,8 +315,8 @@ class MatchedSkill(db.Model):
     """Skills that matched the job description"""
     __tablename__ = 'matched_skills'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     skill_name = db.Column(db.String(200), nullable=False)
     match_type = db.Column(db.String(50))  # Exact, Semantic, Partial
@@ -334,8 +332,8 @@ class MissingSkill(db.Model):
     """Skills mentioned in job description but not found in resume"""
     __tablename__ = 'missing_skills'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
     
     skill_name = db.Column(db.String(200), nullable=False)
     skill_category = db.Column(db.String(100))
@@ -350,7 +348,7 @@ class JobDescription(db.Model):
     """Store job descriptions for analytics"""
     __tablename__ = 'job_descriptions'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     content_hash = db.Column(db.String(64), unique=True, nullable=False)  # SHA256
     
     # Job details
@@ -385,8 +383,8 @@ class ProcessingLog(db.Model):
     """Log processing times and errors for monitoring"""
     __tablename__ = 'processing_logs'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    resume_id = db.Column(UUID(as_uuid=True), db.ForeignKey('resumes.id'))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'))
     
     # Processing details
     stage = db.Column(db.String(100))  # parse, extract, score, save
@@ -409,7 +407,7 @@ class Analytics(db.Model):
     """Daily analytics aggregations"""
     __tablename__ = 'analytics'
     
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.Date, nullable=False, unique=True)
     
     # Volume metrics
